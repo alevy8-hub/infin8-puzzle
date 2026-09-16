@@ -1,0 +1,60 @@
+.in8-feedback {
+  width: 100%;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  text-align: center;
+  border: 1px solid transparent;
+}
+
+.in8-feedback-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.in8-feedback-body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: rgba(245, 245, 245, 0.8);
+}
+
+.in8-feedback--correct {
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.45);
+}
+
+.in8-feedback--correct .in8-feedback-title {
+  color: #d4af37;
+}
+
+.in8-feedback--incorrect {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(245, 245, 245, 0.18);
+}
+
+.in8-feedback--incorrect .in8-feedback-title {
+  color: #f5f5f5;
+}
+
+.in8-try-again {
+  appearance: none;
+  margin-top: 0.85rem;
+  background: transparent;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: #d4af37;
+  border-radius: 999px;
+  min-height: 40px;
+  padding: 0 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.in8-try-again:hover {
+  background: rgba(212, 175, 55, 0.1);
+}
