@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { AnswerInput } from './components/AnswerInput'
 import { Feedback, type FeedbackState } from './components/Feedback'
 import { PuzzleBoard } from './components/PuzzleBoard'
-import { puzzle001 } from './data/puzzles'
+import { puzzles } from './data/puzzles'
 import './App.css'
 
 function shuffle<T>(items: T[]): T[] {
@@ -15,11 +15,21 @@ function shuffle<T>(items: T[]): T[] {
 }
 
 function App() {
-  const puzzle = puzzle001
-  const [choices] = useState(() => shuffle(puzzle.choices))
+  const [puzzleIndex, setPuzzleIndex] = useState(0)
+  const puzzle = puzzles[puzzleIndex]
+  const [choices, setChoices] = useState(() => shuffle(puzzle.choices))
   const [selected, setSelected] = useState<number | null>(null)
   const [customValue, setCustomValue] = useState('')
   const [feedback, setFeedback] = useState<FeedbackState>('idle')
+
+  const resetAnswerState = (nextIndex: number) => {
+    const nextPuzzle = puzzles[nextIndex]
+    setPuzzleIndex(nextIndex)
+    setChoices(shuffle(nextPuzzle.choices))
+    setSelected(null)
+    setCustomValue('')
+    setFeedback('idle')
+  }
 
   const resolvedAnswer = (): number | null => {
     if (customValue.trim() !== '') {
@@ -53,7 +63,18 @@ function App() {
     setCustomValue('')
   }
 
+  const handleNextPuzzle = () => {
+    if (puzzleIndex < puzzles.length - 1) {
+      resetAnswerState(puzzleIndex + 1)
+    }
+  }
+
+  const handleReplay = () => {
+    resetAnswerState(0)
+  }
+
   const locked = feedback === 'correct'
+  const isLastPuzzle = puzzleIndex >= puzzles.length - 1
 
   return (
     <div className="in8-app">
@@ -82,6 +103,21 @@ function App() {
           correctAnswer={puzzle.correctAnswer}
           onTryAgain={feedback === 'incorrect' ? handleTryAgain : undefined}
         />
+        {feedback === 'correct' && !isLastPuzzle ? (
+          <div className="in8-progress">
+            <button type="button" className="in8-progress-btn" onClick={handleNextPuzzle}>
+              NEXT PUZZLE
+            </button>
+          </div>
+        ) : null}
+        {feedback === 'correct' && isLastPuzzle ? (
+          <div className="in8-progress">
+            <p className="in8-progress-complete">PUZZLE 002 COMPLETE</p>
+            <button type="button" className="in8-progress-btn" onClick={handleReplay}>
+              REPLAY
+            </button>
+          </div>
+        ) : null}
       </main>
 
       <footer className="in8-footer">
