@@ -27,7 +27,7 @@ export type Puzzle = {
 
 export const puzzle001: Puzzle = {
   id: '001',
-  title: 'iNFiN8 PUZZLE // 001',
+  title: 'iNFiN8 Puzzle // 001',
   prompt: 'Can you solve it?',
   values: {
     infinity: 8,
@@ -87,7 +87,7 @@ export const puzzle001: Puzzle = {
 
 export const puzzle002: Puzzle = {
   id: '002',
-  title: 'iNFiN8 PUZZLE // 002',
+  title: 'iNFiN8 Puzzle // 002',
   prompt: 'Can you solve it?',
   values: {
     lion: 7,

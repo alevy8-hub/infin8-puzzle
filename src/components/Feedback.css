@@ -1,9 +1,10 @@
 .in8-feedback {
   width: 100%;
+  box-sizing: border-box;
   border-radius: 14px;
   padding: 1rem 1.1rem;
   text-align: center;
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
 }
 
 .in8-feedback-title {
@@ -43,16 +44,19 @@
   appearance: none;
   margin-top: 0.85rem;
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.5);
+  border: 1.5px solid #d4af37;
   color: #d4af37;
   border-radius: 999px;
-  min-height: 40px;
-  padding: 0 1.25rem;
-  font-size: 0.8rem;
+  min-height: 48px;
+  padding: 0.7rem 1.5rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease;
 }
 
 .in8-try-again:hover {
