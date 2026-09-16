@@ -1,6 +1,6 @@
 import type { SymbolId } from '../assets/symbols'
 
-export type Operator = '+' | '×' | '='
+export type Operator = '+' | '×' | '-' | '='
 
 export type EquationToken =
   | { type: 'symbol'; id: SymbolId }
@@ -145,7 +145,67 @@ export const puzzle002: Puzzle = {
   choices: [48, 27, 33, 24],
 }
 
-export const puzzles: Puzzle[] = [puzzle001, puzzle002]
+export const puzzle003: Puzzle = {
+  id: '003',
+  title: 'iNFiN8 Puzzle // 003',
+  prompt: 'Can you solve it?',
+  values: {
+    crown: 9,
+    'electric-guitar': 4,
+    'technic-turntable': 2,
+  },
+  symbolsUsed: ['crown', 'electric-guitar', 'technic-turntable'],
+  rows: [
+    {
+      tokens: [
+        { type: 'symbol', id: 'crown' },
+        { type: 'op', value: '+' },
+        { type: 'symbol', id: 'crown' },
+        { type: 'op', value: '+' },
+        { type: 'symbol', id: 'crown' },
+        { type: 'op', value: '=' },
+        { type: 'number', value: 27 },
+      ],
+    },
+    {
+      tokens: [
+        { type: 'symbol', id: 'crown' },
+        { type: 'op', value: '+' },
+        { type: 'symbol', id: 'electric-guitar' },
+        { type: 'op', value: '+' },
+        { type: 'symbol', id: 'electric-guitar' },
+        { type: 'op', value: '=' },
+        { type: 'number', value: 17 },
+      ],
+    },
+    {
+      tokens: [
+        { type: 'symbol', id: 'electric-guitar' },
+        { type: 'op', value: '+' },
+        { type: 'symbol', id: 'technic-turntable' },
+        { type: 'op', value: '+' },
+        { type: 'symbol', id: 'technic-turntable' },
+        { type: 'op', value: '=' },
+        { type: 'number', value: 8 },
+      ],
+    },
+  ],
+  finalRow: {
+    tokens: [
+      { type: 'symbol', id: 'crown' },
+      { type: 'op', value: '-' },
+      { type: 'symbol', id: 'electric-guitar' },
+      { type: 'op', value: '+' },
+      { type: 'symbol', id: 'technic-turntable' },
+      { type: 'op', value: '=' },
+      { type: 'unknown' },
+    ],
+  },
+  correctAnswer: 7,
+  choices: [3, 7, 11, 15],
+}
+
+export const puzzles: Puzzle[] = [puzzle001, puzzle002, puzzle003]
 
 export function getPuzzle(id: string): Puzzle | undefined {
   return puzzles.find((p) => p.id === id)
