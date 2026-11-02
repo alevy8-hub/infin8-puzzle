@@ -133,3 +133,8 @@
     font-size: 2.25rem;
   }
 }
+
+/* symbol PNGs carry a ~6% transparent margin; scale into it so art stays full size */
+.in8-board .in8-symbol {
+  transform: scale(1.12);
+}
