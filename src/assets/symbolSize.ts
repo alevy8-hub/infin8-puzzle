@@ -6,12 +6,12 @@ import type { SymbolId } from './symbols'
  * the visible art gets an equal size measure w^0.36·h^0.64 (height counts a bit more, so wide
  * marks like A8 / Infinity are allowed to run wider instead of shrinking into a thin strip),
  * nudged up for airy marks (star, guitar, anchor),
- * then capped so tall marks stay inside the row height and wide marks get at most 1.6× the
+ * then capped so tall marks stay inside the row height and wide marks get at most 1.0× the
  * row height in width. The three dogs share one scale so their heads match.
  */
 const TARGET = 0.84 // √(w·h) as a share of the row unit
 const MAX_H = 1.0
-const MAX_W = 1.6
+const MAX_W = 1.0
 const DOGS: SymbolId[] = ['captain', 'btc-builder', 'dj']
 
 const DOG_WEIGHT = 1.04
