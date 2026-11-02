@@ -20,7 +20,7 @@ export function Feedback({ state, puzzle, onTryAgain }: FeedbackProps) {
         <ul className="in8-values" aria-label="Symbol values">
           {puzzle.symbolsUsed.map((id) => (
             <li key={id} className="in8-value-chip">
-              <Symbol id={id} size="sm" />
+              <Symbol id={id} unit={34} />
               <span className="in8-value-num">= {puzzle.values[id]}</span>
             </li>
           ))}

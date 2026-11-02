@@ -18,25 +18,17 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem 0.45rem;
-  min-height: 56px;
-}
-
-.in8-board .in8-symbol--md {
-  width: var(--in8-sym, 48px);
-  height: var(--in8-sym, 48px);
+  min-height: calc(var(--in8-unit, 52px) + 8px);
 }
 
 .in8-group {
   display: inline-flex;
   align-items: center;
-  padding: 1px 4px;
-  border: 1px solid rgba(212, 175, 55, 0.35);
+  flex-shrink: 0;
+  /* gap and padding are set inline from the row unit so they stay even */
+  border: 1px solid rgba(212, 175, 55, 0.4);
   border-radius: 10px;
-  background: rgba(212, 175, 55, 0.06);
-}
-
-.in8-group .in8-symbol + .in8-symbol {
-  margin-left: calc(var(--in8-sym, 48px) * -0.2);
+  background: rgba(212, 175, 55, 0.07);
 }
 
 .in8-board--dense .in8-eq-row {
@@ -102,39 +94,3 @@
   text-align: center;
 }
 
-@media (min-width: 480px) {
-  .in8-board {
-    padding: 1.5rem 1.25rem;
-    gap: 1.15rem;
-  }
-
-  .in8-eq-row {
-    gap: 0.45rem 0.6rem;
-  }
-
-  .in8-board .in8-symbol--md {
-    width: calc(var(--in8-sym, 48px) * 1.15);
-    height: calc(var(--in8-sym, 48px) * 1.15);
-  }
-
-  .in8-group .in8-symbol + .in8-symbol {
-    margin-left: calc(var(--in8-sym, 48px) * -0.23);
-  }
-
-  .in8-op {
-    font-size: 1.55rem;
-  }
-
-  .in8-num {
-    font-size: 1.75rem;
-  }
-
-  .in8-unknown {
-    font-size: 2.25rem;
-  }
-}
-
-/* symbol PNGs carry a ~6% transparent margin; scale into it so art stays full size */
-.in8-board .in8-symbol {
-  transform: scale(1.12);
-}

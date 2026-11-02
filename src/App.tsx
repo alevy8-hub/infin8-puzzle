@@ -6,6 +6,7 @@ import { generatePuzzle, parseCode } from './data/generator'
 import { levelById, levels, ROUND_SIZE, roundPuzzle, type LevelId } from './data/levels'
 import { loadProgress, saveProgress, type LevelProgress, type Progress } from './data/progress'
 import { beginnerPuzzles, type Puzzle } from './data/puzzles'
+import { row } from './data/build'
 import { randomRoundSeed } from './data/random'
 import './App.css'
 
@@ -36,6 +37,27 @@ function sharedFromUrl(): { level: LevelId; puzzle: Puzzle } | null {
     return null
   }
 }
+
+/** ?sizecheck — hidden QA board with all 16 symbols at board size (not linked anywhere). */
+const SIZE_CHECK: Puzzle | null = new URLSearchParams(window.location.search).has('sizecheck')
+  ? {
+      id: 'size-check',
+      title: 'Size check · all 16',
+      prompt: 'Every symbol should read the same size',
+      values: {},
+      symbolsUsed: [],
+      rows: [
+        row('a8-winged + infinity + star + technic-turntable = 1'),
+        row('electric-guitar + headphones + microphone + crown = 2'),
+        row('lion + rampant-lion + anchor + celtic-cross = 3'),
+        row('captain + btc-builder + dj + infin8-symbol = 4'),
+      ],
+      finalRow: row('2:headphones + a8-winged × dj = ?'),
+      correctAnswer: 1,
+      choices: [],
+      explanation: '',
+    }
+  : null
 
 function clearSeedFromUrl() {
   const url = new URL(window.location.href)
@@ -178,6 +200,21 @@ function App() {
     setScreen('start')
     setFeedback('idle')
     window.scrollTo(0, 0)
+  }
+
+  if (SIZE_CHECK) {
+    return (
+      <div className="in8-app">
+        <header className="in8-header">
+          <Brand />
+          <h1 className="in8-title">{SIZE_CHECK.title}</h1>
+          <p className="in8-prompt">{SIZE_CHECK.prompt}</p>
+        </header>
+        <main className="in8-main">
+          <PuzzleBoard puzzle={SIZE_CHECK} />
+        </main>
+      </div>
+    )
   }
 
   if (screen === 'start') {
