@@ -16,6 +16,9 @@ const DOGS: SymbolId[] = ['captain', 'btc-builder', 'dj']
 
 const DOG_WEIGHT = 1.04
 
+// hand-tuned visual corrections (DJ: infinity read too big)
+const TWEAK: Partial<Record<SymbolId, number>> = { infinity: 0.84 }
+
 function weight(id: SymbolId): number {
   const f = SYMBOL_METRICS[id].fill
   return Math.min(1.15, Math.max(1, (0.5 / f) ** 0.35))
@@ -35,6 +38,7 @@ function rawBox(id: SymbolId, unit: number): SymbolBox {
   } else {
     scale = (TARGET * unit * weight(id)) / measure(m.w, m.h)
   }
+  scale *= TWEAK[id] ?? 1
   scale = Math.min(scale, (MAX_H * unit) / m.h, (MAX_W * unit) / m.w)
   return { w: m.w * scale, h: m.h * scale, scale }
 }
