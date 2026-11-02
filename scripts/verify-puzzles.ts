@@ -1,103 +1,115 @@
 /**
- * Machine-verifies every puzzle:
- *  - clue rows have exactly one positive-integer solution (exhaustive search 1..LIMIT with pruning)
- *  - that solution matches the stored values; final row evaluates to the stored answer
- *  - 4 distinct non-negative integer choices, answer included, left-to-right trap included
- *  - every symbol id has a PNG in public/assets/symbols
- * Run: npm run verify
+ * Verifies the frozen V1 Beginner puzzles and N generated puzzles per level.
+ * Each generated puzzle is re-checked independently with a higher solver bound.
+ * Run: npm run verify        (N defaults to 10000; VERIFY_N=20000 npm run verify)
  */
 import { existsSync } from 'node:fs'
 import { evaluate, splitRow } from '../src/data/evaluate'
-import { sections } from '../src/data/levels'
-import type { EquationToken, Puzzle } from '../src/data/puzzles'
-import type { SymbolId } from '../src/assets/symbols'
+import { generatePuzzle, LEVEL_SPECS, type GenStats, type LevelId } from '../src/data/generator'
+import { beginnerPuzzles, type Puzzle } from '../src/data/puzzles'
+import { symbolsIn, validatePuzzle } from '../src/data/solver'
 
-const LIMIT = Number(process.env.VERIFY_LIMIT ?? 300)
+const N = Number(process.env.VERIFY_N ?? 10000)
+const DEEP_LIMIT = 400
 let failures = 0
-const fail = (p: Puzzle, msg: string) => {
-  failures += 1
-  console.log(`  ✗ ${p.id}: ${msg}`)
+
+const assetErrs = (p: Puzzle) =>
+  [...new Set([...p.rows, p.finalRow].flatMap((r) => symbolsIn(r.tokens)))]
+    .filter((id) => !existsSync(`public/assets/symbols/${id}.png`))
+    .map((id) => `missing asset ${id}.png`)
+
+console.log('Frozen V1 Beginner (round 1)')
+for (const p of beginnerPuzzles) {
+  const errs = [...validatePuzzle(p, { multipleChoice: true, limit: 1000 }), ...assetErrs(p)]
+  failures += errs.length ? 1 : 0
+  console.log(`  ${errs.length ? '✗' : '✓'} ${p.id} answer ${p.correctAnswer} ${errs.join('; ')}`)
 }
 
-const symbolsIn = (tokens: EquationToken[]) =>
-  tokens.flatMap((t) => (t.type === 'symbol' ? [t.id] : []))
-
-function solve(p: Puzzle): Record<string, number>[] {
-  const rows = p.rows.map((r) => {
-    const [lhs, rhs] = splitRow(r.tokens)
-    if (rhs?.type !== 'number') throw new Error(`${p.id}: clue result must be a number`)
-    return { lhs, rhs: rhs.value, syms: new Set(symbolsIn(r.tokens)) }
-  })
-  const vars = [...new Set(rows.flatMap((r) => [...r.syms]))] as SymbolId[]
-  // rows to check once the var at depth d has been assigned
-  const checkAt = vars.map(() => [] as typeof rows)
-  for (const r of rows) {
-    const depth = Math.max(...[...r.syms].map((s) => vars.indexOf(s as SymbolId)))
-    checkAt[depth].push(r)
-  }
-  const sols: Record<string, number>[] = []
-  const vals: Partial<Record<SymbolId, number>> = {}
-  const rec = (d: number) => {
-    if (d === vars.length) {
-      sols.push({ ...vals } as Record<string, number>)
-      return
-    }
-    for (let v = 1; v <= LIMIT; v += 1) {
-      vals[vars[d]] = v
-      if (checkAt[d].every((r) => evaluate(r.lhs, vals) === r.rhs)) rec(d + 1)
-    }
-    delete vals[vars[d]]
-  }
-  rec(0)
-  return sols
+const range = () => ({ min: Infinity, max: -Infinity })
+const upd = (r: { min: number; max: number }, v: number) => {
+  r.min = Math.min(r.min, v)
+  r.max = Math.max(r.max, v)
 }
 
-let total = 0
-for (const section of sections) {
-  console.log(`\n${section.name} (${section.puzzles.length} puzzles)`)
-  if (section.puzzles.length !== 8) failures += 1
-  for (const p of section.puzzles) {
-    total += 1
-    const before = failures
-    const all = [...p.rows, p.finalRow].flatMap((r) => symbolsIn(r.tokens))
-    for (const id of new Set(all)) {
-      if (!existsSync(`public/assets/symbols/${id}.png`)) fail(p, `missing asset ${id}.png`)
+for (const level of Object.keys(LEVEL_SPECS) as LevelId[]) {
+  const spec = LEVEL_SPECS[level]
+  const t0 = Date.now()
+  let fails = 0
+  let attempts = 0
+  let maxAttempts = 0
+  const values = range()
+  const clueNums = range()
+  const answers = range()
+  const ops: Record<string, number> = { '+': 0, '−': 0, '×': 0, '÷': 0 }
+  const finalOps: Record<string, number> = { '+': 0, '−': 0, '×': 0, '÷': 0 }
+  const variants: Record<string, number> = {}
+  const finals: Record<string, number> = {}
+  const symbolUse: Record<string, number> = {}
+  let withGroup = 0
+  let ltrTrap = 0
+  let ltrApplicable = 0
+  const ids = new Set<string>()
+  const clueCounts: Record<number, number> = {}
+  const sampleAnswers: number[] = []
+  for (let i = 0; i < N; i += 1) {
+    const seed = 100000 + i * 7 + 13
+    const st = {} as GenStats
+    let p: Puzzle
+    try {
+      p = generatePuzzle(level, seed, st)
+    } catch (e) {
+      fails += 1
+      console.log(`  ✗ ${level}:${seed} ${String(e)}`)
+      continue
     }
-    const clueSyms = new Set(p.rows.flatMap((r) => symbolsIn(r.tokens)))
-    for (const id of symbolsIn(p.finalRow.tokens)) {
-      if (!clueSyms.has(id)) fail(p, `final uses ${id} which no clue defines`)
+    // determinism: same seed → same puzzle
+    const again = generatePuzzle(level, seed)
+    const errs = [
+      ...validatePuzzle(p, { multipleChoice: spec.multipleChoice, limit: i < 2000 ? DEEP_LIMIT : undefined }),
+      ...assetErrs(p),
+      ...(JSON.stringify(again) !== JSON.stringify(p) ? ['not deterministic'] : []),
+      ...(spec.multipleChoice ? [] : p.choices.length ? ['typed level has choices'] : []),
+      ...(p.rows.length > 4 ? ['more than 4 clue lines'] : []),
+    ]
+    if (errs.length) {
+      fails += 1
+      if (fails <= 5) console.log(`  ✗ ${p.id}: ${errs.join('; ')}`)
     }
-    const sols = solve(p)
-    if (sols.length !== 1) fail(p, `${sols.length} solutions in 1..${LIMIT}: ${JSON.stringify(sols.slice(0, 3))}`)
-    const sol = sols[0] ?? {}
-    const keys = Object.keys(p.values)
-    if (keys.length !== Object.keys(sol).length || keys.some((k) => sol[k] !== p.values[k as SymbolId])) {
-      fail(p, `stored values ${JSON.stringify(p.values)} ≠ solution ${JSON.stringify(sol)}`)
+    ids.add(JSON.stringify([p.rows, p.finalRow]))
+    attempts += st.attempts
+    maxAttempts = Math.max(maxAttempts, st.attempts)
+    variants[st.variant] = (variants[st.variant] ?? 0) + 1
+    finals[st.final] = (finals[st.final] ?? 0) + 1
+    clueCounts[p.rows.length] = (clueCounts[p.rows.length] ?? 0) + 1
+    Object.values(p.values).forEach((v) => upd(values, v as number))
+    p.symbolsUsed.forEach((s) => (symbolUse[s] = (symbolUse[s] ?? 0) + 1))
+    for (const r of p.rows) {
+      const [lhs, rhs] = splitRow(r.tokens)
+      if (rhs.type === 'number') upd(clueNums, rhs.value)
+      lhs.forEach((t) => t.type === 'op' && (ops[t.value] += 1))
     }
-    const [flhs, frhs] = splitRow(p.finalRow.tokens)
-    if (frhs?.type !== 'unknown') fail(p, 'final row must end in ?')
-    const ans = evaluate(flhs, p.values)
-    if (ans !== p.correctAnswer) fail(p, `final evaluates to ${ans}, stored ${p.correctAnswer}`)
-    if (!(Number.isInteger(p.correctAnswer) && p.correctAnswer > 0)) fail(p, 'answer not a positive integer')
-    const c = p.choices
-    if (c.length !== 4) fail(p, `${c.length} choices`)
-    if (new Set(c).size !== c.length) fail(p, `duplicate choices ${c}`)
-    if (!c.includes(p.correctAnswer)) fail(p, 'answer missing from choices')
-    if (c.some((x) => !Number.isInteger(x) || x < 0)) fail(p, 'choice not a non-negative integer')
+    const [flhs] = splitRow(p.finalRow.tokens)
+    flhs.forEach((t) => t.type === 'op' && (finalOps[t.value] += 1))
+    if ([...p.rows, p.finalRow].some((r) => r.tokens.some((t) => t.type === 'symbol' && (t.count ?? 1) > 1))) withGroup += 1
+    upd(answers, p.correctAnswer)
+    if (sampleAnswers.length < 100000) sampleAnswers.push(p.correctAnswer)
     const ltr = evaluate(flhs, p.values, false)
-    const trapNote =
-      ltr === null || ltr === ans
-        ? 'n/a (same or non-whole)'
-        : c.includes(ltr)
-          ? `${ltr} ✓`
-          : `${ltr} MISSING`
-    if (ltr !== null && ltr !== ans && !c.includes(ltr)) fail(p, `left-to-right trap ${ltr} not in choices`)
-    if (!p.explanation.includes(String(p.correctAnswer))) fail(p, 'explanation does not state the answer')
-    const vals = Object.entries(p.values).map(([k, v]) => `${k}=${v}`).join(', ')
-    console.log(
-      `  ${failures === before ? '✓' : '✗'} ${p.id}  [${vals}]  answer ${ans}  choices ${c.join('/')}  LTR trap: ${trapNote}`,
-    )
+    if (spec.multipleChoice && ltr !== null && ltr !== p.correctAnswer && ltr >= 0) {
+      ltrApplicable += 1
+      if (p.choices.includes(ltr)) ltrTrap += 1
+    }
   }
+  failures += fails
+  sampleAnswers.sort((a, b) => a - b)
+  const median = sampleAnswers[Math.floor(sampleAnswers.length / 2)]
+  const pct = (n: number) => `${((100 * n) / N).toFixed(1)}%`
+  console.log(`\n${level.toUpperCase()}: ${N} generated, ${fails} failure(s), ${ids.size} distinct, ${((Date.now() - t0) / 1000).toFixed(1)}s`)
+  console.log(`  symbol values ${values.min}–${values.max} · clue results ${clueNums.min}–${clueNums.max} · answers ${answers.min}–${answers.max} (median ${median})`)
+  console.log(`  clue ops ${JSON.stringify(ops)} · final ops ${JSON.stringify(finalOps)}`)
+  console.log(`  clue lines ${JSON.stringify(clueCounts)} · with pair/group ${pct(withGroup)} · variants ${JSON.stringify(variants)}`)
+  console.log(`  finals ${JSON.stringify(finals)}`)
+  console.log(`  generator attempts avg ${(attempts / N).toFixed(1)}, max ${maxAttempts} · all 16 symbols used: ${Object.keys(symbolUse).length === 16}`)
+  if (spec.multipleChoice) console.log(`  left-to-right trap offered when it differs: ${ltrTrap}/${ltrApplicable}`)
 }
-console.log(`\n${total} puzzles checked, ${failures} failure(s).`)
+console.log(`\nTotal failures: ${failures}`)
 process.exit(failures ? 1 : 0)

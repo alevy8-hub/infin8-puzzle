@@ -332,3 +332,11 @@
   min-height: 44px;
   cursor: pointer;
 }
+
+.in8-best {
+  margin: -0.6rem 0 1.2rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 245, 0.55);
+}

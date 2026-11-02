@@ -22,9 +22,12 @@ export function AnswerInput({
   const canSubmit =
     !disabled && (selected !== null || customValue.trim().length > 0)
 
+  const typedOnly = choices.length === 0
+
   return (
     <div className="in8-answer">
-      <p className="in8-answer-label">Your answer</p>
+      <p className="in8-answer-label">{typedOnly ? 'Type your answer' : 'Your answer'}</p>
+      {typedOnly ? null : (
       <div className="in8-choices" role="group" aria-label="Answer choices">
         {choices.map((choice) => {
           const active = selected === choice
@@ -42,17 +45,21 @@ export function AnswerInput({
           )
         })}
       </div>
+      )}
 
       <div className="in8-custom-row">
-        <label className="in8-custom-label" htmlFor="in8-custom-answer">
-          Or enter a number
-        </label>
+        {typedOnly ? null : (
+          <label className="in8-custom-label" htmlFor="in8-custom-answer">
+            Or enter a number
+          </label>
+        )}
         <input
           id="in8-custom-answer"
           className="in8-custom-input"
           type="number"
           inputMode="numeric"
           placeholder="?"
+          aria-label={typedOnly ? 'Your answer' : undefined}
           value={customValue}
           disabled={disabled}
           onChange={(e) => onCustomChange(e.target.value)}
