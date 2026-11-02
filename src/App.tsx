@@ -5,6 +5,7 @@ import { PuzzleBoard } from './components/PuzzleBoard'
 import { generatePuzzle, parseCode } from './data/generator'
 import { levelById, levels, ROUND_SIZE, roundPuzzle, type LevelId } from './data/levels'
 import { loadProgress, saveProgress, type LevelProgress, type Progress } from './data/progress'
+import { awardSolve, currentStreak, formatPoints, loadPoints, savePoints, type Award, type PointsState } from './data/points'
 import { beginnerPuzzles, type Puzzle } from './data/puzzles'
 import { row } from './data/build'
 import { randomRoundSeed } from './data/random'
@@ -98,6 +99,17 @@ function levelStatus(p: LevelProgress, unlocked: boolean, prevName?: string): st
   return `Start · ${ROUND_SIZE} puzzles per round`
 }
 
+function PointsRow({ points }: { points: PointsState }) {
+  const streak = currentStreak(points)
+  return (
+    <p className="in8-points-row">
+      <span className="in8-points-total">{formatPoints(points.total)} pts</span>
+      <span className="in8-points-sep"> · </span>
+      {streak > 0 ? `${streak}-day streak` : 'Solve one today to start a streak'}
+    </p>
+  )
+}
+
 function App() {
   const [shared] = useState(sharedFromUrl)
   const [progress, setProgress] = useState<Progress>(loadProgress)
@@ -123,6 +135,9 @@ function App() {
   const [selected, setSelected] = useState<number | null>(null)
   const [customValue, setCustomValue] = useState('')
   const [feedback, setFeedback] = useState<FeedbackState>('idle')
+  const [points, setPoints] = useState<PointsState>(loadPoints)
+  // points from the latest correct answer (null on shared puzzles: no points there)
+  const [gain, setGain] = useState<Award | null>(null)
 
   const update = (id: LevelId, fn: (p: LevelProgress) => LevelProgress) => {
     setProgress((prev) => {
@@ -140,6 +155,7 @@ function App() {
     setSelected(null)
     setCustomValue('')
     setFeedback('idle')
+    setGain(null)
   }
 
   const openLevel = (id: LevelId) => {
@@ -171,21 +187,31 @@ function App() {
     const correct = answer === puzzle.correctAnswer
     setFeedback(correct ? 'correct' : 'incorrect')
     if (screen === 'shared' || !round) return
+    let award: Award | null = null
+    if (correct) {
+      const result = awardSolve(points, levelId, !round.missedCurrent, round.index + 1 >= ROUND_SIZE)
+      award = result.award
+      savePoints(result.next)
+      setPoints(result.next)
+      setGain(award)
+    }
+    const earned = award?.total ?? 0
     update(levelId, (old) => {
       const r = old.round
       if (!r) return old
       if (!correct) return { ...old, round: { ...r, misses: r.misses + 1, missedCurrent: true } }
       const firstTry = r.firstTry + (r.missedCurrent ? 0 : 1)
       const index = r.index + 1
+      const roundPoints = (r.points ?? 0) + earned
       if (index >= ROUND_SIZE) {
         return {
           roundsCleared: old.roundsCleared + 1,
           bestScore: Math.max(old.bestScore ?? 0, firstTry),
           round: null,
-          lastRound: { number: r.number, firstTry, misses: r.misses },
+          lastRound: { number: r.number, firstTry, misses: r.misses, points: roundPoints },
         }
       }
-      return { ...old, round: { ...r, index, firstTry, missedCurrent: false } }
+      return { ...old, round: { ...r, index, firstTry, missedCurrent: false, points: roundPoints } }
     })
   }
 
@@ -223,6 +249,7 @@ function App() {
         <header className="in8-header in8-header-start">
           <Brand />
           <p className="in8-series">Puzzle Series</p>
+          <PointsRow points={points} />
           <p className="in8-pick">Choose your level · new puzzles every round</p>
           <ul className="in8-sections">
             {levels.map((l, i) => {
@@ -277,6 +304,10 @@ function App() {
               <span className="in8-score-label">{last.misses === 1 ? 'Miss' : 'Misses'}</span>
             </div>
           </div>
+          <p className="in8-round-points">
+            +{formatPoints(last.points ?? 0)} pts this round
+            <span className="in8-round-points-total"> · {formatPoints(points.total)} total</span>
+          </p>
           <p className="in8-best">
             Best {lp.bestScore ?? last.firstTry}/{ROUND_SIZE} · {lp.roundsCleared} round
             {lp.roundsCleared === 1 ? '' : 's'} cleared
@@ -356,6 +387,7 @@ function App() {
         <Feedback
           state={feedback}
           puzzle={puzzle}
+          gain={gain}
           onTryAgain={
             feedback === 'incorrect'
               ? () => {

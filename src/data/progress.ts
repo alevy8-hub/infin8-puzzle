@@ -8,6 +8,8 @@ export type RoundState = {
   firstTry: number
   /** current puzzle already had a wrong answer */
   missedCurrent: boolean
+  /** points earned so far this round (missing in older saves) */
+  points?: number
 }
 
 export type LevelProgress = {
@@ -16,7 +18,7 @@ export type LevelProgress = {
   bestScore: number | null
   round: RoundState | null
   /** last finished round, for the round-complete screen */
-  lastRound: { number: number; firstTry: number; misses: number } | null
+  lastRound: { number: number; firstTry: number; misses: number; points?: number } | null
 }
 
 export type Progress = Record<LevelId, LevelProgress>

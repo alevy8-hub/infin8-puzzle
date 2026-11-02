@@ -345,3 +345,28 @@
   color: #d4af37;
   font-weight: 700;
 }
+
+.in8-points-row {
+  margin: -0.5rem 0 1rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  color: rgba(245, 245, 245, 0.6);
+}
+
+.in8-points-total {
+  font-weight: 800;
+  color: #d4af37;
+}
+
+.in8-round-points {
+  margin: -0.4rem 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #d4af37;
+}
+
+.in8-round-points-total {
+  font-weight: 600;
+  color: rgba(245, 245, 245, 0.6);
+}
