@@ -21,6 +21,43 @@
   min-height: 56px;
 }
 
+.in8-board .in8-symbol--md {
+  width: var(--in8-sym, 48px);
+  height: var(--in8-sym, 48px);
+}
+
+.in8-group {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 4px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 10px;
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.in8-group .in8-symbol + .in8-symbol {
+  margin-left: calc(var(--in8-sym, 48px) * -0.2);
+}
+
+.in8-board--dense .in8-eq-row {
+  gap: 0.3rem 0.3rem;
+}
+
+.in8-board--dense .in8-op {
+  font-size: 1.15rem;
+  padding: 0;
+}
+
+.in8-board--dense .in8-num {
+  font-size: 1.3rem;
+  min-width: 0;
+}
+
+.in8-board--dense .in8-unknown {
+  font-size: 1.7rem;
+  min-width: 0;
+}
+
 .in8-eq-row--final {
   padding-top: 0.25rem;
 }
@@ -73,6 +110,15 @@
 
   .in8-eq-row {
     gap: 0.45rem 0.6rem;
+  }
+
+  .in8-board .in8-symbol--md {
+    width: calc(var(--in8-sym, 48px) * 1.15);
+    height: calc(var(--in8-sym, 48px) * 1.15);
+  }
+
+  .in8-group .in8-symbol + .in8-symbol {
+    margin-left: calc(var(--in8-sym, 48px) * -0.23);
   }
 
   .in8-op {

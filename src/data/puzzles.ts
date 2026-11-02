@@ -1,9 +1,10 @@
 import type { SymbolId } from '../assets/symbols'
 
-export type Operator = '+' | '×' | '-' | '÷' | '='
+export type Operator = '+' | '×' | '−' | '÷' | '='
 
 export type EquationToken =
-  | { type: 'symbol'; id: SymbolId }
+  /** count > 1 renders a group (e.g. a pair) worth count × the symbol's value */
+  | { type: 'symbol'; id: SymbolId; count?: number }
   | { type: 'op'; value: Operator }
   | { type: 'number'; value: number }
   | { type: 'unknown' }
@@ -23,6 +24,8 @@ export type Puzzle = {
   finalRow: EquationRow
   correctAnswer: number
   choices: number[]
+  /** Key step shown on Correct (symbol values are shown separately) */
+  explanation: string
 }
 
 export const puzzle001: Puzzle = {
@@ -83,6 +86,7 @@ export const puzzle001: Puzzle = {
   },
   correctAnswer: 23,
   choices: [23, 39, 16, 11],
+  explanation: 'Multiply first: 5 × 3 = 15, then 8 + 15 = 23.',
 }
 
 export const puzzle002: Puzzle = {
@@ -143,6 +147,7 @@ export const puzzle002: Puzzle = {
   },
   correctAnswer: 27,
   choices: [48, 27, 33, 24],
+  explanation: 'Multiply first: 5 × 4 = 20, then 7 + 20 = 27.',
 }
 
 export const puzzle003: Puzzle = {
@@ -193,7 +198,7 @@ export const puzzle003: Puzzle = {
   finalRow: {
     tokens: [
       { type: 'symbol', id: 'crown' },
-      { type: 'op', value: '-' },
+      { type: 'op', value: '−' },
       { type: 'symbol', id: 'electric-guitar' },
       { type: 'op', value: '+' },
       { type: 'symbol', id: 'technic-turntable' },
@@ -203,6 +208,7 @@ export const puzzle003: Puzzle = {
   },
   correctAnswer: 7,
   choices: [3, 7, 11, 15],
+  explanation: 'Only − and +, so go left to right: 9 − 4 = 5, then 5 + 2 = 7.',
 }
 
 export const puzzle004: Puzzle = {
@@ -255,7 +261,7 @@ export const puzzle004: Puzzle = {
       { type: 'symbol', id: 'rampant-lion' },
       { type: 'op', value: '×' },
       { type: 'symbol', id: 'celtic-cross' },
-      { type: 'op', value: '-' },
+      { type: 'op', value: '−' },
       { type: 'symbol', id: 'a8-winged' },
       { type: 'op', value: '=' },
       { type: 'unknown' },
@@ -263,6 +269,7 @@ export const puzzle004: Puzzle = {
   },
   correctAnswer: 9,
   choices: [6, 9, 12, 15],
+  explanation: 'Multiply first: 6 × 2 = 12, then 12 − 3 = 9.',
 }
 
 export const puzzle005: Puzzle = {
@@ -323,6 +330,7 @@ export const puzzle005: Puzzle = {
   },
   correctAnswer: 28,
   choices: [52, 28, 17, 36],
+  explanation: 'Multiply first: 5 × 4 = 20, then 8 + 20 = 28.',
 }
 
 export const puzzle006: Puzzle = {
@@ -383,6 +391,7 @@ export const puzzle006: Puzzle = {
   },
   correctAnswer: 5,
   choices: [5, 8, 14, 6],
+  explanation: 'Divide first: 12 ÷ 4 = 3, then 3 + 2 = 5.',
 }
 
 export const puzzle007: Puzzle = {
@@ -433,7 +442,7 @@ export const puzzle007: Puzzle = {
   finalRow: {
     tokens: [
       { type: 'symbol', id: 'lion' },
-      { type: 'op', value: '-' },
+      { type: 'op', value: '−' },
       { type: 'symbol', id: 'technic-turntable' },
       { type: 'op', value: '+' },
       { type: 'symbol', id: 'microphone' },
@@ -443,6 +452,7 @@ export const puzzle007: Puzzle = {
   },
   correctAnswer: 12,
   choices: [0, 6, 12, 18],
+  explanation: 'Only − and +, so go left to right: 9 − 3 = 6, then 6 + 6 = 12.',
 }
 
 export const puzzle008: Puzzle = {
@@ -503,9 +513,10 @@ export const puzzle008: Puzzle = {
   },
   correctAnswer: 34,
   choices: [64, 40, 34, 28],
+  explanation: 'Multiply first: 6 × 4 = 24, then 10 + 24 = 34.',
 }
 
-export const puzzles: Puzzle[] = [
+export const beginnerPuzzles: Puzzle[] = [
   puzzle001,
   puzzle002,
   puzzle003,
@@ -515,6 +526,3 @@ export const puzzles: Puzzle[] = [
   puzzle007,
   puzzle008,
 ]
-export function getPuzzle(id: string): Puzzle | undefined {
-  return puzzles.find((p) => p.id === id)
-}

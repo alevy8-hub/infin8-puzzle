@@ -74,7 +74,6 @@
   display: inline-block;
   font-size: 0.65rem;
   letter-spacing: 0.22em;
-  text-transform: uppercase;
   color: rgba(245, 245, 245, 0.35);
   padding: 0.35rem 0;
   border-top: 1px solid rgba(212, 175, 55, 0.25);
@@ -159,4 +158,177 @@
 .in8-main-complete {
   align-items: center;
   justify-content: center;
+}
+
+.in8-pick {
+  margin: 0 0 0.75rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 1rem;
+  color: rgba(245, 245, 245, 0.65);
+}
+
+.in8-sections {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.in8-section-btn {
+  appearance: none;
+  width: 100%;
+  display: grid;
+  gap: 0.2rem;
+  text-align: left;
+  padding: 0.85rem 1.1rem;
+  min-height: 64px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(212, 175, 55, 0.55);
+  background: linear-gradient(165deg, #141414 0%, #0a0a0a 100%);
+  color: #f5f5f5;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.in8-section-btn:hover:not(:disabled) {
+  border-color: #d4af37;
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.in8-section-btn:focus-visible {
+  outline: 2px solid #d4af37;
+  outline-offset: 2px;
+}
+
+.in8-section-btn--locked {
+  border-color: rgba(245, 245, 245, 0.12);
+  opacity: 0.55;
+  cursor: default;
+}
+
+.in8-section-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.in8-section-blurb {
+  font-size: 0.78rem;
+  color: rgba(245, 245, 245, 0.6);
+}
+
+.in8-section-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+.in8-section-btn--locked .in8-section-status {
+  color: rgba(245, 245, 245, 0.55);
+}
+
+.in8-topbar {
+  display: flex;
+  justify-content: flex-start;
+  margin: -0.35rem 0 0.15rem;
+}
+
+.in8-back {
+  appearance: none;
+  background: none;
+  border: none;
+  color: rgba(212, 175, 55, 0.85);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  min-height: 40px;
+  padding: 0 0.25rem;
+  cursor: pointer;
+}
+
+.in8-complete-kicker {
+  margin: 0.4rem 0 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+.in8-complete-title {
+  margin: 0 0 1.1rem;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.in8-score {
+  display: flex;
+  gap: 0.8rem;
+  width: 100%;
+  margin-bottom: 1.3rem;
+}
+
+.in8-score-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.9rem 0.5rem;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.in8-score-num {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #f5f5f5;
+}
+
+.in8-score-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 245, 0.6);
+}
+
+.in8-complete-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.7rem;
+}
+
+.in8-share {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.in8-link-btn {
+  appearance: none;
+  background: none;
+  border: none;
+  color: rgba(245, 245, 245, 0.55);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  min-height: 44px;
+  cursor: pointer;
 }
