@@ -340,3 +340,8 @@
   text-transform: uppercase;
   color: rgba(245, 245, 245, 0.55);
 }
+
+.in8-inf {
+  color: #d4af37;
+  font-weight: 700;
+}

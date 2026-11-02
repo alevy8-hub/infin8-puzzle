@@ -308,8 +308,17 @@ function App() {
   const isShared = screen === 'shared'
   const isLast = viewIndex >= ROUND_SIZE - 1
   const progressLabel = isShared
-    ? `SHARED PUZZLE · ${level.name.toUpperCase()}`
+    ? level.name.toUpperCase()
     : `PUZZLE ${viewIndex + 1} OF ${ROUND_SIZE} · ${level.name.toUpperCase()} · ROUND ${roundNumber}`
+  // friendly running count instead of the internal seed code (code stays in share links)
+  const inf = <span className="in8-inf">∞</span>
+  const displayTitle = isShared ? (
+    <>iNFiN8 Puzzle {inf}</>
+  ) : (
+    <>
+      iNFiN8 Puzzle {(roundNumber - 1) * ROUND_SIZE + viewIndex + 1}/{inf}
+    </>
+  )
 
   return (
     <div className="in8-app">
@@ -321,7 +330,7 @@ function App() {
         </div>
         <Brand />
         <p className="in8-progress-indicator">{progressLabel}</p>
-        <h1 className="in8-title">{puzzle.title}</h1>
+        <h1 className="in8-title">{displayTitle}</h1>
         <p className="in8-prompt">{puzzle.prompt}</p>
       </header>
 
