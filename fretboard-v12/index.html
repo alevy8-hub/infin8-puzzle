@@ -69,6 +69,12 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-
 .heard{font-size:18px;font-weight:800;min-height:26px}
 .listening{animation:blink 1.2s infinite}@keyframes blink{50%{opacity:.45}}
 @media(max-width:540px){.choices{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}}
+.fretboard{position:relative}
+.boxrow{display:flex;align-items:center;gap:8px;margin:0 0 6px}.boxrow strong{font-size:15px;white-space:nowrap}
+.boxbtns{flex:1;display:grid;grid-template-columns:1.25fr repeat(5,1fr) 1.25fr;gap:4px}.boxbtns button{padding:6px 0;min-height:40px;font-size:15px;border-radius:9px}
+.boxhint{font-size:13px;color:#c6ceda;margin:0 0 8px;line-height:1.35}
+.boxsvg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+.note.dim{opacity:.28}.note.box{box-shadow:0 0 0 2px #0009}
 .choices.many{grid-template-columns:repeat(4,1fr)}@media(max-width:540px){.choices.many{grid-template-columns:repeat(3,1fr)}.choices.many button{font-size:16px;padding:8px 4px}}
 </style></head><body><main>
 <div class="eyebrow">iNFiN8 • MISSION 009</div><h1>🎸 Fretboard Trainer <span style="color:var(--gold)">V1.2</span></h1><p class="sub">Hear it. Name it. Unlock it. Feel it.</p>
@@ -80,6 +86,7 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-
 <div class="btnrow two"><button id="next" class="primary">▶ Step up the scale</button><button id="random">🎲 Random note</button></div></section>
 <section class="panel"><div class="row"><h2>Interactive Fretboard</h2><span class="stats" id="stats">0 unlocked</span></div>
 <div class="row" style="margin:10px 0"><strong>View</strong><div class="directions"><button data-dir="R" class="primary">R →</button><button data-dir="L">← L</button><button data-dir="U">↑ U</button><button data-dir="D">↓ D</button></div></div>
+<div id="boxRow" style="display:none"><div class="boxrow"><strong>Boxes</strong><div class="boxbtns" role="group" aria-label="Pentatonic box shapes"><button data-box="all">All</button><button data-box="1">1</button><button data-box="2">2</button><button data-box="3">3</button><button data-box="4">4</button><button data-box="5">5</button><button data-box="off" class="primary">Off</button></div></div><p class="boxhint" id="boxHint"></p></div>
 <div class="fret-scroll" id="scroller"><div id="board" class="fretboard" role="group" aria-label="Interactive guitar fretboard"></div></div>
 <p class="hint" id="boardHint" style="margin:6px 0 0">Tap any fret to hear it. Swipe sideways for higher frets.</p></section>
 <section class="panel" id="practice"><div id="question" class="question">Press ▶ Step up the scale or 🎲 Random note to get a question.</div>
@@ -145,10 +152,62 @@ function droneMidi(){let m=36+rootPc();while(m<40)m+=12;return m}
 function startDrone(){stopDrone();if(!$('drone').checked||micOn)return;const c=ac(),g=c.createGain(),lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=700;g.gain.setValueAtTime(0.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(0.05,c.currentTime+1.2);lp.connect(g);g.connect(c.destination);
  const f=440*Math.pow(2,(droneMidi()-69)/12),os=[[f,'triangle',1],[f*2,'sine',.35],[f*1.003,'sine',.5]].map(([fr,t,v])=>{const o=c.createOscillator(),og=c.createGain();o.type=t;o.frequency.value=fr;og.gain.value=v;o.connect(og);og.connect(lp);o.start();return o});drone={g,os}}
 function stopDrone(){if(!drone)return;const c=ctx,{g,os}=drone;g.gain.cancelScheduledValues(c.currentTime);g.gain.setValueAtTime(g.gain.value,c.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+0.4);os.forEach(o=>o.stop(c.currentTime+0.45));drone=null}
+/* ---------- pentatonic box shapes ---------- */
+// Standard 2-notes-per-string positions. Box k starts on the low E string at scale degree k (Box 1 = root on low E),
+// then takes the next 12 consecutive scale notes, two per string, low E to high e. Using real pitches minus each
+// string's open pitch makes the G->B major-third shift come out automatically. The octave copy (+/-12) that fits
+// frets 0-12 is used; if none fits, the copy with the most notes on the board is shown and the rest are listed as clipped.
+const BOX_COLORS=['#ff6b6b','#ffb347','#5ce1a0','#5cb8ff','#c38bff'];
+let boxSel='off';
+function isPent(n){return /Pentatonic/.test(n||$('scale').value)}
+function pentBoxes(rp,modeName){const m=MODES[modeName],par=MODES[m.parent],iv=m.pick.map(i=>par.i[i]),set=new Set(iv.map(x=>pc(rp+x)));
+ const r=pc(rp-4),out=[];
+ for(let k=0;k<5;k++){const ps=[];let p=40+r+iv[k];while(ps.length<12){if(set.has(pc(p)))ps.push(p);p++}
+  let best=null;for(const sh of [-24,-12,0,12]){const notes=ps.map((q,i)=>{const s=Math.floor(i/2),f=q+sh-tuning[s];return{s,f,m:q+sh,on:f>=0&&f<=12}});const cnt=notes.filter(x=>x.on).length;
+   if(!best||cnt>best.cnt)best={cnt,notes,sh}}
+  const on=best.notes.filter(x=>x.on),fs=on.map(x=>x.f);
+  out.push({n:k+1,notes:best.notes,full:best.cnt===12,lo:Math.min(...fs),hi:Math.max(...fs),clipped:best.notes.filter(x=>!x.on)})}
+ return out}
+function activeBoxes(){if(!isPent()||boxSel==='off')return[];const all=pentBoxes(rootPc(),$('scale').value);return boxSel==='all'?all:[all[boxSel-1]]}
+let boxKeys=new Set();
+function boxEdges(){return{R:['right','left'],L:['left','right'],U:['bottom','top'],D:['top','bottom']}[orientation]}
+function updateBoxUI(AB){const pent=isPent();$('boxRow').style.display=pent?'':'none';document.querySelectorAll('[data-box]').forEach(x=>x.classList.toggle('primary',x.dataset.box===String(boxSel)));
+ if(!pent||!AB.length){$('boxHint').textContent=pent?'Pick a box to see its shape and every note in it, labeled.':'';return}
+ const maj=$('scale').value==='Major Pentatonic',kind=maj?'major':'minor',rn=SP.rootName,[eh,el]=boxEdges();
+ const rel=maj?SP.notes.find(n=>n.deg==='6').name:null;
+ const rng=b=>{if(!b.clipped.length)return`${b.lo}–${b.hi}`;const g={};b.clipped.forEach(x=>(g[x.f]=g[x.f]||[]).push(x.s===5?'high e':strings[x.s]));
+  return`${b.lo}–${b.hi} (`+Object.keys(g).map(f=>`${g[f].join(', ')} fret ${f>12?f:'−'+(-f)} ${f>12?'is past fret 12':'is below the nut'}`).join('; ')+', not shown)'};
+ let t=boxSel==='all'?`All 5 boxes · ${rn} ${kind} pentatonic · `+AB.map(b=>`${b.n}: ${rng(b)}`).join(' · ')+'.'
+  :`Box ${AB[0].n} of 5 · ${rn} ${kind} pentatonic · frets ${rng(AB[0])}.`;
+ t+=` Boxes link: the ${eh} edge of each is the ${el} edge of the next.`;
+ if(maj)t+=` Major uses the ${rel} minor (relative minor) shapes, numbered from the ${rn} root on low E`+(boxSel==='all'?`: ${rn} major Box 1 = ${rel} minor Box 2.`:`: ${rn} major Box ${AB[0].n} = ${rel} minor Box ${AB[0].n%5+1}.`);
+ $('boxHint').textContent=t}
+function drawBoxOverlay(AB){const b=$('board');b.querySelectorAll('.boxsvg').forEach(x=>x.remove());if(!AB.length)return;
+ const br=b.getBoundingClientRect(),ox=br.left+b.clientLeft,oy=br.top+b.clientTop,NS='http://www.w3.org/2000/svg';
+ const cen=(s,f)=>{const r=b.querySelector(`.fret[data-s="${s}"][data-f="${f}"]`).getBoundingClientRect();return[r.left+r.width/2-ox,r.top+r.height/2-oy]};
+ const pos=(s,f)=>{if(f>=0&&f<=12&&f===Math.round(f))return cen(s,f);const a=f>12?12:f<0?0:Math.floor(f),c=f>12?11:f<0?1:a+1,p=cen(s,a),q=cen(s,c),k=f>12||f<0?-Math.abs(f-a):f-a;return[p[0]+(q[0]-p[0])*k,p[1]+(q[1]-p[1])*k]};
+ const svg=document.createElementNS(NS,'svg');svg.setAttribute('class','boxsvg');svg.setAttribute('aria-hidden','true');
+ const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);svg.append(e);return e};
+ const c0=cen(0,0),c12=cen(5,12),fr=b.querySelector('.fret').getBoundingClientRect(),hw=fr.width/2,hh=fr.height/2,cx=[c0[0],c12[0]],cy=[c0[1],c12[1]];
+ const cp=el('clipPath',{id:'boxclip'});svg.removeChild(cp);el('defs',{}).append(cp);const rc=document.createElementNS(NS,'rect');
+ rc.setAttribute('x',Math.min(...cx)-hw);rc.setAttribute('y',Math.min(...cy)-hh);rc.setAttribute('width',Math.abs(cx[1]-cx[0])+2*hw);rc.setAttribute('height',Math.abs(cy[1]-cy[0])+2*hh);cp.append(rc);
+ const g=el('g',{'clip-path':'url(#boxclip)'}),gl=(t,a)=>{const e=el(t,a);g.append(e);return e};
+ const single=AB.length===1,lane=b.querySelector('.num').getBoundingClientRect(),vert=orientation==='U'||orientation==='D';
+ AB.forEach(bx=>{const col=single?'#ff3b3b':BOX_COLORS[bx.n-1],inset=single?0:7,L=[],R=[];
+  for(let s=0;s<6;s++){const a=pos(s,bx.notes[2*s].f),c=pos(s,bx.notes[2*s+1].f),dx=c[0]-a[0],dy=c[1]-a[1],len=Math.hypot(dx,dy)||1,ux=dx/len*inset,uy=dy/len*inset;L.push([a[0]+ux,a[1]+uy]);R.push([c[0]-ux,c[1]-uy])}
+  const poly=[...L,...R.slice().reverse()].map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ');
+  gl('polygon',{points:poly,fill:col,'fill-opacity':single?.10:.07,stroke:col,'stroke-opacity':single?.95:.8,'stroke-width':single?3.5:2.5,'stroke-linejoin':'round'});
+  if(single)for(let s=0;s<6;s++)gl('line',{x1:L[s][0],y1:L[s][1],x2:R[s][0],y2:R[s][1],stroke:col,'stroke-width':3.5,'stroke-linecap':'round'});
+  // box number badge in the fret-number lane
+  const mid=(bx.lo+bx.hi)/2,mf=mid===Math.round(mid)?mid+.5:mid,c=pos(0,Math.min(12,mf));
+  const bxy=vert?[lane.left+lane.width/2-ox,c[1]]:[c[0],lane.top+lane.height/2-oy];
+  el('circle',{cx:bxy[0],cy:bxy[1],r:10,fill:col,stroke:'#0b0e13','stroke-width':1.5});
+  const tx=el('text',{x:bxy[0],y:bxy[1]+4.5,'text-anchor':'middle','font-size':13,'font-weight':900,fill:'#14110a','font-family':'system-ui,sans-serif'});tx.textContent=bx.n});
+ b.append(svg)}
 /* ---------- board ---------- */
 function key(s,f){return s+'-'+f}
 const INLAY={3:1,5:1,7:1,9:1,12:2};
-function draw(){const b=$('board');b.innerHTML='';const vert=orientation==='U'||orientation==='D';b.className='fretboard '+(vert?'v':'h')+' dir-'+orientation;
+function draw(){const b=$('board');b.innerHTML='';const AB=activeBoxes();boxKeys=new Set();AB.forEach(bx=>bx.notes.forEach(x=>{if(x.on)boxKeys.add(key(x.s,x.f))}));const vert=orientation==='U'||orientation==='D';b.className='fretboard '+(vert?'v':'h')+' dir-'+orientation;
  const fretPos=f=>orientation==='R'||orientation==='U'?f+2:13-f; // grid line index (1-based) along the neck
  const put=(el,r,c)=>{el.style.gridRow=r;el.style.gridColumn=c;b.append(el)};
  const lab=s=>{const d=document.createElement('div');d.className='string-label';d.textContent=strings[s];return d};
@@ -157,20 +216,22 @@ function draw(){const b=$('board');b.innerHTML='';const vert=orientation==='U'||
  if(!vert){for(let s=0;s<6;s++){put(lab(s),s+1,lead);for(let f=0;f<=12;f++)put(makeFret(s,f),s+1,fretPos(f))}put(Object.assign(document.createElement('div'),{className:'corner'}),7,lead);for(let f=0;f<=12;f++)put(num(f),7,fretPos(f))}
  else{for(let s=0;s<6;s++)put(lab(s),lead,s+2);put(Object.assign(document.createElement('div'),{className:'corner'}),lead,1);for(let f=0;f<=12;f++){put(num(f),fretPos(f),1);for(let s=0;s<6;s++)put(makeFret(s,f),fretPos(f),s+2)}}
  document.querySelectorAll('[data-dir]').forEach(x=>x.classList.toggle('primary',x.dataset.dir===orientation));$('boardHint').textContent=vert?`Tap any fret to hear it. Scroll ${orientation==='U'?'down':'up'} for higher frets.`:'Tap any fret to hear it. Swipe sideways for higher frets.';
- $('stats').textContent=`${unlocked.size} unlocked · ${correct}/${attempts} correct`}
+ $('stats').textContent=`${unlocked.size} unlocked · ${correct}/${attempts} correct`;updateBoxUI(AB);drawBoxOverlay(AB)}
 function makeFret(s,f){const m=tuning[s]+f,k=key(s,f),n=info(m),isSel=selected&&selected.s===s&&selected.f===f,btn=document.createElement('button');
  btn.className='fret'+(f===0?' open':'')+(INLAY[f]?' inlay':'')+(isSel&&(mode!=='hear'||answered)?' selected':'');btn.dataset.s=s;btn.dataset.f=f;
  btn.setAttribute('aria-label',`${stringNames[s]} string, fret ${f}`);
  if(INLAY[f]){const pearls=INLAY[f]===2?[1,3]:[2];if(pearls.includes(s)){const p=document.createElement('span');p.className='pearl';btn.append(p)}}
  const dot=document.createElement('span');dot.className='note';
  const now=performance.now(),fl=flash&&flash.until>now?flash:null;
- const showLab=(cls)=>{dot.className='note lab '+cls;const d=n?n.deg:null;dot.style.background=d?degColor(d):'#d9d7d1';const v=$('display').value;dot.innerHTML=v==='both'?`${nameOf(m)}<small>${d||''}</small>`:v==='note'?nameOf(m):(d||'—')};
+ const showLab=(cls,force)=>{dot.className='note lab '+cls;const d=n?n.deg:null;dot.style.background=d?degColor(d):'#d9d7d1';const v=force||$('display').value;dot.innerHTML=v==='both'?`${nameOf(m)}<small>${d||''}</small>`:v==='note'?nameOf(m):(d||'—')};
  if(isSel&&!answered&&mode!=='hear'){dot.className='note target';dot.textContent='?'}
  else if(fl&&pc(m)===fl.pc)showLab('same');
  else if(reveal!==null&&pc(m)===reveal)showLab('same');
+ else if(boxKeys.has(k))showLab('box','both');
  else if(fl&&n&&f>=fl.lo&&f<=fl.hi)showLab('shape');
  else if(unlocked.has(k))showLab('locked');
  else if(n)dot.textContent='•';else dot.className='note empty';
+ if(boxKeys.size&&!boxKeys.has(k)&&!/target|same/.test(dot.className))dot.classList.add('dim');
  btn.append(dot);btn.onclick=()=>tapPlay(m);return btn}
 function scrollToFret(s,f,smooth=true){requestAnimationFrame(()=>{const el=document.querySelector(`#board .fret[data-s="${s}"][data-f="${f}"]`);if(!el)return;const sc=$('scroller');
  const left=el.offsetLeft-(sc.clientWidth-el.offsetWidth)/2;sc.style.scrollBehavior=smooth?'smooth':'auto';sc.scrollLeft=Math.max(0,left);
@@ -260,6 +321,8 @@ document.querySelectorAll('[data-dir]').forEach(b=>b.onclick=()=>{orientation=b.
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 $('next').onclick=nextQ;$('random').onclick=randomQ;$('root').onchange=reset;$('scale').onchange=reset;$('display').onchange=()=>{draw();if(question&&mode==='hear'){/* refresh labels */}};$('reset').onclick=reset;
 $('replay').onclick=()=>{if(question)play(question.m)};$('rootnote').onclick=playRootThenNote;
+document.querySelectorAll('[data-box]').forEach(x=>x.onclick=()=>{const v=x.dataset.box;boxSel=v==='all'||v==='off'?v:+v;draw();if(typeof boxSel==='number'){const bx=activeBoxes()[0];scrollToFret(0,Math.round((bx.lo+bx.hi)/2))}else scrollToNut()});
+let rzT=null;addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>drawBoxOverlay(activeBoxes()),120)});
 $('drone').onchange=()=>{if($('drone').checked)startDrone();else stopDrone()};
 $('mic').onclick=()=>{if(micOn)stopMic();else startMic()};
 $('exact').onchange=()=>{if(question)choose(question.s,question.f)};
