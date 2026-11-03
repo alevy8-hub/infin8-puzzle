@@ -9,6 +9,7 @@ import { awardSolve, currentStreak, formatPoints, loadPoints, savePoints, type A
 import { beginnerPuzzles, type Puzzle } from './data/puzzles'
 import { row } from './data/build'
 import { randomRoundSeed } from './data/random'
+import { FREE, SUBSCRIBE_URL } from './data/mode'
 import './App.css'
 
 type Screen = 'start' | 'playing' | 'round-complete' | 'shared'
@@ -30,6 +31,8 @@ function sharedFromUrl(): { level: LevelId; puzzle: Puzzle } | null {
   if (!code) return null
   const v1 = beginnerPuzzles.find((p) => p.id === code.trim())
   if (v1) return { level: 'beginner', puzzle: v1 }
+  // free build: only DJ's original 8 open from a link; other codes are ignored
+  if (FREE) return null
   const parsed = parseCode(code)
   if (!parsed) return null
   try {
@@ -67,7 +70,15 @@ function clearSeedFromUrl() {
 }
 
 function isUnlocked(progress: Progress, index: number): boolean {
+  if (FREE) return index === 0
   return index === 0 || progress[levels[index - 1].id].roundsCleared > 0
+}
+
+function freeStatus(p: LevelProgress, unlocked: boolean): string {
+  if (!unlocked) return 'Subscribers'
+  if (p.round) return `Continue · ${p.round.index}/${ROUND_SIZE}`
+  if (p.roundsCleared > 0) return `Play again${p.bestScore === null ? '' : ` · best ${p.bestScore}/${ROUND_SIZE}`}`
+  return `Start · the free ${ROUND_SIZE}`
 }
 
 function Brand() {
@@ -159,10 +170,12 @@ function App() {
   }
 
   const openLevel = (id: LevelId) => {
+    if (FREE && id !== 'beginner') return
     const p = progress[id]
     let r = p.round
     if (!r) {
-      r = { number: p.roundsCleared + 1, seed: randomRoundSeed(), index: 0, misses: 0, firstTry: 0, missedCurrent: false }
+      // free build replays DJ's original 8 (Beginner round 1) instead of new rounds
+      r = { number: FREE ? 1 : p.roundsCleared + 1, seed: randomRoundSeed(), index: 0, misses: 0, firstTry: 0, missedCurrent: false }
       const newRound = r
       update(id, (old) => ({ ...old, round: newRound }))
     }
@@ -250,7 +263,7 @@ function App() {
           <Brand />
           <p className="in8-series">Puzzle Series</p>
           <PointsRow points={points} />
-          <p className="in8-pick">Choose your level · new puzzles every round</p>
+          <p className="in8-pick">{FREE ? 'Free · my original 8 Beginner puzzles' : 'Choose your level · new puzzles every round'}</p>
           <ul className="in8-sections">
             {levels.map((l, i) => {
               const p = progress[l.id]
@@ -268,12 +281,47 @@ function App() {
                       {l.name}
                     </span>
                     <span className="in8-section-blurb">{l.blurb}</span>
-                    <span className="in8-section-status">{levelStatus(p, unlocked, levels[i - 1]?.name)}</span>
+                    <span className="in8-section-status">
+                      {FREE ? freeStatus(p, unlocked) : levelStatus(p, unlocked, levels[i - 1]?.name)}
+                    </span>
                   </button>
                 </li>
               )
             })}
           </ul>
+        </header>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (screen === 'round-complete' && FREE) {
+    const last = lp.lastRound ?? { number: 1, firstTry: 0, misses: 0 }
+    return (
+      <div className="in8-app">
+        <header className="in8-header in8-header-start">
+          <Brand />
+          <div className="in8-end-card">
+            <p className="in8-end-stats">
+              {last.firstTry}/{ROUND_SIZE} first try · +{formatPoints(last.points ?? 0)} pts
+            </p>
+            <h1 className="in8-end-title">You finished the free 8</h1>
+            <p className="in8-end-body">
+              Want unlimited? Endless Beginner, Intermediate and Advanced puzzles with points and daily streaks, plus
+              my book deep dives.
+            </p>
+            <div className="in8-complete-actions">
+              <a className="in8-submit in8-share" href={SUBSCRIBE_URL} target="_blank" rel="noopener noreferrer">
+                Subscribe for $5/mo
+              </a>
+              <button type="button" className="in8-progress-btn" onClick={() => openLevel('beginner')}>
+                Play the free 8 again
+              </button>
+              <button type="button" className="in8-link-btn" onClick={goHome}>
+                Home
+              </button>
+            </div>
+          </div>
         </header>
         <Footer />
       </div>
@@ -340,7 +388,9 @@ function App() {
   const isLast = viewIndex >= ROUND_SIZE - 1
   const progressLabel = isShared
     ? level.name.toUpperCase()
-    : `PUZZLE ${viewIndex + 1} OF ${ROUND_SIZE} · ${level.name.toUpperCase()} · ROUND ${roundNumber}`
+    : FREE
+      ? `PUZZLE ${viewIndex + 1} OF ${ROUND_SIZE} · ${level.name.toUpperCase()} · FREE`
+      : `PUZZLE ${viewIndex + 1} OF ${ROUND_SIZE} · ${level.name.toUpperCase()} · ROUND ${roundNumber}`
   // friendly running count instead of the internal seed code (code stays in share links)
   const inf = <span className="in8-inf">∞</span>
   const displayTitle = isShared ? (
@@ -356,7 +406,7 @@ function App() {
       <header className="in8-header">
         <div className="in8-topbar">
           <button type="button" className="in8-back" onClick={goHome} aria-label="Back to levels">
-            ‹ Levels
+            {FREE ? '‹ Home' : '‹ Levels'}
           </button>
         </div>
         <Brand />

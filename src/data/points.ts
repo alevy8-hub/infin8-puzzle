@@ -1,4 +1,5 @@
 import type { LevelId } from './levels'
+import { storageKey } from './mode'
 
 /** Base points per solve. */
 export const BASE_POINTS: Record<LevelId, number> = { beginner: 10, intermediate: 20, advanced: 40 }
@@ -25,7 +26,7 @@ export type Award = {
   roundBonus: number
 }
 
-const KEY = 'infin8-puzzle-points-v1'
+const KEY = storageKey('infin8-puzzle-points-v1')
 
 const fresh = (): PointsState => ({
   total: 0,

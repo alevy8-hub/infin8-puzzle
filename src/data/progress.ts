@@ -1,4 +1,5 @@
 import type { LevelId } from './levels'
+import { storageKey } from './mode'
 
 export type RoundState = {
   number: number
@@ -23,8 +24,8 @@ export type LevelProgress = {
 
 export type Progress = Record<LevelId, LevelProgress>
 
-const KEY = 'infin8-puzzle-progress-v2'
-const OLD_KEY = 'infin8-puzzle-progress-v1'
+const KEY = storageKey('infin8-puzzle-progress-v2')
+const OLD_KEY = storageKey('infin8-puzzle-progress-v1')
 
 const fresh = (): LevelProgress => ({ roundsCleared: 0, bestScore: null, round: null, lastRound: null })
 
