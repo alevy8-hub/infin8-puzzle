@@ -76,7 +76,7 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-
 <div class="chips" id="chips"></div><p class="spellnote" id="spellNote"></p>
 <div class="checks"><label class="checkbox"><input id="voice" type="checkbox" checked> Speak correct answers</label><label class="checkbox"><input id="autoplay" type="checkbox" checked> Play note when I tap a fret</label><label class="checkbox"><input id="drone" type="checkbox"> Soft root drone</label></div></section>
 <section class="panel"><h2>Practice</h2>
-<div class="tabs" role="tablist"><button data-mode="see" class="primary">👁 See it<br><small>name the ?</small></button><button data-mode="hear">👂 Hear it<br><small>ear-first</small></button><button data-mode="play">🎸 FEEL it<br><small>on your guitar</small></button></div>
+<div class="tabs" role="tablist"><button data-mode="see" class="primary">👁 See<br><small>name the ?</small></button><button data-mode="hear">👂 Hear<br><small>ear-first</small></button><button data-mode="play">🎸 FEEL<br><small>on your guitar</small></button></div>
 <div class="btnrow two"><button id="next" class="primary">▶ Step up the scale</button><button id="random">🎲 Random note</button></div></section>
 <section class="panel"><div class="row"><h2>Interactive Fretboard</h2><span class="stats" id="stats">0 unlocked</span></div>
 <div class="row" style="margin:10px 0"><strong>View</strong><div class="directions"><button data-dir="R" class="primary">R →</button><button data-dir="L">← L</button><button data-dir="U">↑ U</button><button data-dir="D">↓ D</button></div></div>
@@ -92,7 +92,7 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-
 <div class="choices" id="choices"></div><div id="hintBox" class="hint" aria-live="polite"></div>
 <div id="feedback" class="status" aria-live="polite">Pick a practice mode, then press ▶ or 🎲.</div>
 <div class="btnrow"><button id="replay">🔊 Replay note</button><button id="rootnote" style="display:none">🔁 Root → note</button><button id="reset">Reset unlocked labels</button></div></section>
-<p class="foot">Audio is a plucked-string synth (Karplus-Strong) made in your browser, not a sampled guitar. Speech uses your device's voices. On iPhone, flip the silent switch off and turn up volume. 🎸 FEEL it uses your microphone only on this page, only after you tap Start listening; nothing is recorded or sent anywhere. Labels last for this session and reset when you change key or mode. Standard tuning E A D G B E; frets 0–12.</p>
+<p class="foot">Audio is a plucked-string synth (Karplus-Strong) made in your browser, not a sampled guitar. Speech uses your device's voices. On iPhone, flip the silent switch off and turn up volume. 🎸 FEEL uses your microphone only on this page, only after you tap Start listening; nothing is recorded or sent anywhere. Labels last for this session and reset when you change key or mode. Standard tuning E A D G B E; frets 0–12.</p>
 </main><script>
 /* ---------- theory ---------- */
 const LET=['C','D','E','F','G','A','B'],NAT=[0,2,4,5,7,9,11],ACC={'-2':'𝄫','-1':'♭','0':'','1':'♯','2':'𝄪'};
