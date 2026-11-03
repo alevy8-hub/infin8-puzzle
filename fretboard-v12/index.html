@@ -74,7 +74,20 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-
 .boxbtns{flex:1;display:grid;grid-template-columns:1.25fr repeat(5,1fr) 1.25fr;gap:4px}.boxbtns button{padding:6px 0;min-height:40px;font-size:15px;border-radius:9px}
 .boxhint{font-size:13px;color:#c6ceda;margin:0 0 8px;line-height:1.35}
 .boxsvg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
-.note.dim{opacity:.28}.note.box{box-shadow:0 0 0 2px #0009}
+.note.dim{opacity:.28}
+.note.qz{width:40px;height:40px;background:#2b3442;color:#fff;border:2px dashed var(--gold);font-size:19px;font-weight:900}
+.note.qz.qnext{box-shadow:0 0 0 3px var(--gold),0 0 14px 4px #f2c66d99;animation:pulse .8s ease-in-out infinite alternate}
+.note.qz.qopen{background:var(--gold);color:#211707;border-style:solid;animation:none}
+.note.qz.bad{background:#b3343f;border-color:#ffb3b8;animation:shake .45s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.note.qsolved{animation:pop .35s}@keyframes pop{from{transform:scale(1.35)}to{transform:scale(1)}}
+.quizbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 8px}.quizbar button{padding:7px 10px;min-height:40px;font-size:14px}
+.quizbar .qprog{font-weight:800;color:var(--gold)}.quizbar .qdone{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-weight:800;color:#bff5d8}
+.qpop{position:absolute;z-index:50;width:min(320px,calc(100vw - 16px));background:#1d2430;border:2px solid var(--gold);border-radius:14px;padding:12px;box-shadow:0 10px 30px #000c}
+.qpop .qq{font-weight:800;font-size:17px;margin:0 30px 10px 0}.qpop .qq small{display:block;font-size:13px;color:var(--muted);font-weight:600}
+.qpop .qch{display:grid;grid-template-columns:1fr 1fr;gap:8px}.qpop .qch button{min-height:48px;font-size:19px}
+.qpop .qch button.correct{background:#185c45;border-color:var(--green)}.qpop .qch button.wrong{background:#653139;border-color:#f18c93}
+.qpop .qfb{font-size:14px;margin-top:8px;color:#e3e7ee}.qpop .qfb:empty{display:none}.qpop .qx{position:absolute;right:6px;top:6px;padding:4px 10px;min-height:36px;background:transparent;border-color:transparent;font-size:20px}.note.box{box-shadow:0 0 0 2px #0009}
 .choices.many{grid-template-columns:repeat(4,1fr)}@media(max-width:540px){.choices.many{grid-template-columns:repeat(3,1fr)}.choices.many button{font-size:16px;padding:8px 4px}}
 </style></head><body><main>
 <div class="eyebrow">iNFiN8 • MISSION 009</div><h1>🎸 Fretboard Trainer <span style="color:var(--gold)">V1.2</span></h1><p class="sub">Hear it. Name it. Unlock it. Feel it.</p>
@@ -86,7 +99,7 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-
 <div class="btnrow two"><button id="next" class="primary">▶ Step up the scale</button><button id="random">🎲 Random note</button></div></section>
 <section class="panel"><div class="row"><h2>Interactive Fretboard</h2><span class="stats" id="stats">0 unlocked</span></div>
 <div class="row" style="margin:10px 0"><strong>View</strong><div class="directions"><button data-dir="S" class="primary">Std</button><button data-dir="R">R →</button><button data-dir="L">← L</button><button data-dir="U">↑ U</button><button data-dir="D">↓ D</button></div></div>
-<div id="boxRow" style="display:none"><div class="boxrow"><strong>Boxes</strong><div class="boxbtns" role="group" aria-label="Pentatonic box shapes"><button data-box="all">All</button><button data-box="1">1</button><button data-box="2">2</button><button data-box="3">3</button><button data-box="4">4</button><button data-box="5">5</button><button data-box="off" class="primary">Off</button></div></div><p class="boxhint" id="boxHint"></p></div>
+<div id="boxRow" style="display:none"><div class="boxrow"><strong>Boxes</strong><div class="boxbtns" role="group" aria-label="Pentatonic box shapes"><button data-box="all">All</button><button data-box="1">1</button><button data-box="2">2</button><button data-box="3">3</button><button data-box="4">4</button><button data-box="5">5</button><button data-box="off" class="primary">Off</button></div></div><p class="boxhint" id="boxHint"></p><div class="quizbar" id="quizBar"></div></div>
 <div class="fret-scroll" id="scroller"><div id="board" class="fretboard" role="group" aria-label="Interactive guitar fretboard"></div></div>
 <p class="hint" id="boardHint" style="margin:6px 0 0">Tap any fret to hear it. Swipe sideways for higher frets.</p></section>
 <section class="panel" id="practice"><div id="question" class="question">Press ▶ Step up the scale or 🎲 Random note to get a question.</div>
@@ -100,6 +113,7 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-
 <div id="feedback" class="status" aria-live="polite">Pick a practice mode, then press ▶ or 🎲.</div>
 <div class="btnrow"><button id="replay">🔊 Replay note</button><button id="rootnote" style="display:none">🔁 Root → note</button><button id="reset">Reset unlocked labels</button></div></section>
 <p class="foot">Audio is a plucked-string synth (Karplus-Strong) made in your browser, not a sampled guitar. Speech uses your device's voices. On iPhone, flip the silent switch off and turn up volume. 🎸 FEEL uses your microphone only on this page, only after you tap Start listening; nothing is recorded or sent anywhere. Labels last for this session and reset when you change key or mode. Standard tuning E A D G B E; frets 0–24.</p>
+<div id="qpop" class="qpop" role="dialog" aria-label="Name this note" hidden><button class="qx" id="qpopX" aria-label="Close">×</button><div class="qq" id="qpopQ"></div><div class="qch" id="qpopC"></div><div class="qfb" id="qpopF" aria-live="polite"></div></div>
 </main><script>
 /* ---------- theory ---------- */
 const LET=['C','D','E','F','G','A','B'],NAT=[0,2,4,5,7,9,11],ACC={'-2':'𝄫','-1':'♭','0':'','1':'♯','2':'𝄪'};
@@ -173,10 +187,10 @@ function pentBoxes(rp,modeName){const m=MODES[modeName],par=MODES[m.parent],iv=m
  out.forEach(b=>{b.cands.forEach(c=>{if(c.cnt<12&&c.notes.some(x=>x.on&&!cov.has(x.s+'-'+x.f))){c.partial=true;c.copy=b.copies.length;b.copies.push(c)}});delete b.cands});
  return out}
 // one entry per drawn copy: a picked box shows every octave copy that fits (e.g. A minor Box 1 at 5-8 and 17-20)
-function activeBoxes(){if(!isPent()||boxSel==='off')return[];const all=pentBoxes(rootPc(),$('scale').value);return(boxSel==='all'?all:[all[boxSel-1]]).flatMap(b=>b.copies)}
+function activeBoxes(){if(!isPent()||boxSel==='off')return[];const all=pentBoxes(rootPc(),$('scale').value);return(boxSel==='all'?all:[all[boxSel-1]]).flatMap(b=>quizActive()&&boxSel!=='all'?[b.copies[0]]:b.copies)}
 let boxKeys=new Set();
 function boxEdges(){return{S:['right','left'],R:['right','left'],L:['left','right'],U:['bottom','top'],D:['top','bottom']}[orientation]}
-function updateBoxUI(AB){const pent=isPent();$('boxRow').style.display=pent?'':'none';document.querySelectorAll('[data-box]').forEach(x=>x.classList.toggle('primary',x.dataset.box===String(boxSel)));
+function updateBoxUI(AB){const pent=isPent();renderQuizBar();$('boxRow').style.display=pent?'':'none';document.querySelectorAll('[data-box]').forEach(x=>x.classList.toggle('primary',x.dataset.box===String(boxSel)));
  if(!pent||!AB.length){$('boxHint').textContent=pent?'Pick a box to see its shape and every note in it, labeled.':'';return}
  const maj=$('scale').value==='Major Pentatonic',kind=maj?'major':'minor',rn=SP.rootName,[eh,el]=boxEdges();
  const rel=maj?SP.notes.find(n=>n.deg==='6').name:null;
@@ -187,22 +201,64 @@ function updateBoxUI(AB){const pent=isPent();$('boxRow').style.display=pent?'':'
  t+=` Boxes link: the ${eh} edge of each is the ${el} edge of the next.`;
  if(maj)t+=` Major uses the ${rel} minor (relative minor) shapes, numbered from the ${rn} root on low E`+(boxSel==='all'?`: ${rn} major Box 1 = ${rel} minor Box 2.`:`: ${rn} major Box ${AB[0].n} = ${rel} minor Box ${AB[0].n%5+1}.`);
  $('boxHint').textContent=t}
+/* ---------- shape quiz ----------
+   Generic: a "shape" is {id, title, notes:[{s,f}], next:{label, load()}}. Pentatonic boxes are one provider (pentShape);
+   later lessons (CAGED chords, other scale shapes) can build a shape the same way and call quizStart(shape). */
+let quizPref=true; // "Quiz this box" toggle: on by default whenever a box (1-5) is picked
+const SQ={shape:null,order:[],keys:new Set(),solved:new Set(),open:null,wrong:0,done:false,timer:null};
+function shapeOrder(notes){return notes.slice().sort((a,b)=>a.f-b.f||a.s-b.s)} // fret by fret, low E -> high e within a fret
+function quizActive(){return!!SQ.shape}
+function quizStart(shape){clearTimeout(SQ.timer);Object.assign(SQ,{shape,order:shapeOrder(shape.notes),solved:new Set(),open:null,wrong:0,done:false});SQ.keys=new Set(SQ.order.map(x=>key(x.s,x.f)));
+ question=null;selected=null;answered=false;reveal=null;flash=null;$('choices').innerHTML='';$('hintBox').textContent='';$('qpop').hidden=true}
+function quizStop(){clearTimeout(SQ.timer);SQ.shape=null;SQ.order=[];SQ.keys=new Set();SQ.open=null;$('qpop').hidden=true}
+function quizNextIdx(){return SQ.order.findIndex(x=>!SQ.solved.has(key(x.s,x.f)))}
+function noteName(p){return info(p)?info(p).name:SP.chrom[pc(p)]}
+function quizChoices(m){const p=pc(m),scale=SP.notes.map(n=>n.pc).filter(x=>x!==p),cd=x=>Math.min((x-p+12)%12,(p-x+12)%12);
+ const near=shuffle(scale.slice()).sort((a,b)=>cd(a)-cd(b)).slice(0,2),chrom=shuffle([pc(p+1),pc(p-1),pc(p+2),pc(p-2)].filter(x=>x!==p&&!near.includes(x)));
+ const opts=[p,...near];for(const x of chrom){if(opts.length>=4)break;if(!opts.map(noteName).includes(noteName(x)))opts.push(x)}return shuffle(opts)}
+function quizDot(s,f){return document.querySelector(`#board .fret[data-s="${s}"][data-f="${f}"] .note`)}
+function quizAsk(s,f){if(!quizActive())return;clearTimeout(SQ.timer);SQ.lastSolved=null;const k=key(s,f);if(!SQ.keys.has(k)||SQ.solved.has(k))return;const m=tuning[s]+f;SQ.open={s,f,k,m};SQ.wrong=0;
+ $('qpopQ').innerHTML=`What note is this?<small>(${stringNames[s]} string, fret ${f})</small>`;$('qpopF').textContent='';const c=$('qpopC');c.innerHTML='';
+ quizChoices(m).forEach(p=>{const b=document.createElement('button');b.textContent=noteName(p);b.onclick=()=>quizAnswer(p,b);c.append(b)});
+ draw();scrollToFret(s,f,false);$('qpop').hidden=false;setTimeout(placePop,60)}
+function quizClose(){SQ.open=null;$('qpop').hidden=true;draw()}
+function placePop(){const pop=$('qpop');if(!SQ.open||pop.hidden)return;const d=quizDot(SQ.open.s,SQ.open.f);if(!d)return;const r=d.getBoundingClientRect(),w=pop.offsetWidth,h=pop.offsetHeight;
+ const left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2));let top=r.bottom+10;if(top+h>innerHeight-8&&r.top-h-10>8)top=r.top-h-10;
+ pop.style.left=(left+scrollX)+'px';pop.style.top=(top+scrollY)+'px';const pr=pop.getBoundingClientRect();if(pr.bottom>innerHeight-4)window.scrollBy(0,pr.bottom-innerHeight+12);else if(pr.top<4)window.scrollBy(0,pr.top-12)}
+function statsText(){$('stats').textContent=`${unlocked.size} unlocked · ${correct}/${attempts} correct`}
+function quizAnswer(p,btn){const o=SQ.open;if(!o||btn.disabled)return;attempts++;
+ if(p===pc(o.m)){correct++;unlocked.add(o.k);SQ.solved.add(o.k);[...$('qpopC').children].forEach(b=>b.disabled=true);btn.classList.add('correct');buzz([30,40,30]);
+  const name=nameOf(o.m),d=degOf(o.m);$('qpopF').textContent=`✅ ${name} · ${d}`;play(o.m);speak(`${sayNote(name)}, ${sayDeg(d)}`);SQ.lastSolved=o.k;draw();SQ.lastSolved=null;setTimeout(placePop,0);
+  const nx=quizNextIdx();
+  if(nx<0){SQ.done=true;SQ.timer=setTimeout(()=>{SQ.open=null;$('qpop').hidden=true;draw();speak(`${SQ.shape.title} complete!`);$('quizBar').scrollIntoView({block:'nearest',behavior:'smooth'})},1100)}
+  else SQ.timer=setTimeout(()=>{if(SQ.open&&SQ.open.k===o.k){const x=SQ.order[nx];quizAsk(x.s,x.f)}},950)}
+ else{btn.classList.add('wrong');btn.disabled=true;SQ.wrong++;buzz(120);statsText();
+  $('qpopF').textContent=SQ.wrong>=2?(o.f===0?`💡 It's the open ${stringNames[o.s]} string, so it's the string's own note.`:`💡 The open ${stringNames[o.s]} string is ${nameOf(tuning[o.s])}. Count up ${o.f} fret${o.f===1?'':'s'} (one half step each).`):'❌ Not quite. Try again.';
+  const d=quizDot(o.s,o.f);if(d){d.classList.remove('bad');void d.offsetWidth;d.classList.add('bad');setTimeout(()=>d.classList.remove('bad'),650)}}}
+function quizGuided(){if(!quizActive())return false;if(SQ.done){SQ.shape.next.load();return true}const i=quizNextIdx();if(i>=0){const x=SQ.order[i];quizAsk(x.s,x.f)}return true}
+function quizRandom(){const left=SQ.order.filter(x=>!SQ.solved.has(key(x.s,x.f)));if(!left.length)return quizGuided();const x=left[Math.floor(Math.random()*left.length)];quizAsk(x.s,x.f);return true}
+function renderQuizBar(){const bar=$('quizBar');if(!isPent()||typeof boxSel!=='number'){bar.innerHTML='';return}
+ let h=`<button id="qtoggle" aria-pressed="${quizPref}" class="${quizPref?'primary':''}">🧩 Quiz this box: ${quizPref?'On':'Off'}</button>`;
+ if(quizActive()){h+=`<span class="qprog" id="qprog">${SQ.shape.title}: ${SQ.solved.size}/${SQ.order.length}</span>`;
+  h+=SQ.done?`<div class="qdone" id="qdone">${SQ.shape.title} complete! 🎉 <button id="qnextbox" class="primary">Next: ${SQ.shape.next.label} →</button></div>`:`<span class="muted" style="font-size:13px">Tap any ? or press ▶ to go in order.</span>`}
+ else h+=`<span class="muted" style="font-size:13px">Viewing the box, all notes labeled.</span>`;
+ bar.innerHTML=h;$('qtoggle').onclick=()=>{quizPref=!quizPref;pickBox(boxSel)};if($('qnextbox'))$('qnextbox').onclick=()=>SQ.shape.next.load()}
+// pentatonic box -> quiz shape (lowest full copy of the box)
+function pentShape(n){const b=pentBoxes(rootPc(),$('scale').value)[n-1],c=b.copies[0];
+ return{id:`pent|${rootPc()}|${$('scale').value}|${n}`,title:`Box ${n}`,notes:c.notes.filter(x=>x.on).map(x=>({s:x.s,f:x.f})),next:{label:`Box ${n%5+1}`,load:()=>pickBox(n%5+1)}}}
+function pickBox(v){boxSel=v;if(typeof v==='number'&&quizPref&&isPent())quizStart(pentShape(v));else quizStop();draw();
+ if(typeof boxSel==='number'){const bx=activeBoxes()[0];scrollToFret(0,Math.round((bx.lo+bx.hi)/2))}else scrollToNut()}
 function drawBoxOverlay(AB){const b=$('board');b.querySelectorAll('.boxsvg').forEach(x=>x.remove());if(!AB.length)return;
  const br=b.getBoundingClientRect(),ox=br.left+b.clientLeft,oy=br.top+b.clientTop,NS='http://www.w3.org/2000/svg';
  const cen=(s,f)=>{const r=b.querySelector(`.fret[data-s="${s}"][data-f="${f}"]`).getBoundingClientRect();return[r.left+r.width/2-ox,r.top+r.height/2-oy]};
  const pos=(s,f)=>{if(f>=0&&f<=NF&&f===Math.round(f))return cen(s,f);const a=f>NF?NF:f<0?0:Math.floor(f),c=f>NF?NF-1:f<0?1:a+1,p=cen(s,a),q=cen(s,c),k=f>NF||f<0?-Math.abs(f-a):f-a;return[p[0]+(q[0]-p[0])*k,p[1]+(q[1]-p[1])*k]};
  const svg=document.createElementNS(NS,'svg');svg.setAttribute('class','boxsvg');svg.setAttribute('aria-hidden','true');
  const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);svg.append(e);return e};
- const c0=cen(0,0),c12=cen(5,NF),fr=b.querySelector('.fret').getBoundingClientRect(),hw=fr.width/2,hh=fr.height/2,cx=[c0[0],c12[0]],cy=[c0[1],c12[1]];
- const cp=el('clipPath',{id:'boxclip'});svg.removeChild(cp);el('defs',{}).append(cp);const rc=document.createElementNS(NS,'rect');
- rc.setAttribute('x',Math.min(...cx)-hw);rc.setAttribute('y',Math.min(...cy)-hh);rc.setAttribute('width',Math.abs(cx[1]-cx[0])+2*hw);rc.setAttribute('height',Math.abs(cy[1]-cy[0])+2*hh);cp.append(rc);
- const g=el('g',{'clip-path':'url(#boxclip)'}),gl=(t,a)=>{const e=el(t,a);g.append(e);return e};
  const single=boxSel!=='all',lane=b.querySelector('.num').getBoundingClientRect(),vert=orientation==='U'||orientation==='D';
- AB.forEach(bx=>{const col=single?'#ff3b3b':BOX_COLORS[bx.n-1],inset=single?0:7,L=[],R=[];
-  for(let s=0;s<6;s++){const a=pos(s,bx.notes[2*s].f),c=pos(s,bx.notes[2*s+1].f),dx=c[0]-a[0],dy=c[1]-a[1],len=Math.hypot(dx,dy)||1,ux=dx/len*inset,uy=dy/len*inset;L.push([a[0]+ux,a[1]+uy]);R.push([c[0]-ux,c[1]-uy])}
-  const poly=[...L,...R.slice().reverse()].map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ');
-  gl('polygon',{points:poly,fill:col,'fill-opacity':single?.10:.07,stroke:col,'stroke-opacity':single?.95:.8,'stroke-width':single?3.5:2.5,'stroke-linejoin':'round'});
-  if(single)for(let s=0;s<6;s++)gl('line',{x1:L[s][0],y1:L[s][1],x2:R[s][0],y2:R[s][1],stroke:col,'stroke-width':3.5,'stroke-linecap':'round'});
+ // only the two notes on the SAME string are joined (no cross-string links, outline or fill)
+ AB.forEach(bx=>{const col=single?'#ff3b3b':BOX_COLORS[bx.n-1];
+  for(let s=0;s<6;s++){const a=bx.notes[2*s],c=bx.notes[2*s+1];if(!a.on&&!c.on)continue;const p=pos(s,Math.max(-.5,Math.min(NF+.5,a.f))),q=pos(s,Math.max(-.5,Math.min(NF+.5,c.f)));
+   el('line',{x1:p[0],y1:p[1],x2:q[0],y2:q[1],stroke:col,'stroke-opacity':single?.95:.8,'stroke-width':single?3.5:3,'stroke-linecap':'round'})}
   // box number badge in the fret-number lane
   const mid=(bx.lo+bx.hi)/2,mf=mid===Math.round(mid)?mid+.5:mid,c=pos(0,Math.min(NF,mf));
   const bxy=vert?[lane.left+lane.width/2-ox,c[1]]:[c[0],lane.top+lane.height/2-oy];
@@ -222,7 +278,7 @@ function draw(){const b=$('board');b.innerHTML='';const AB=activeBoxes();boxKeys
  if(!vert){for(let s=0;s<6;s++){put(lab(s),row(s),lead);for(let f=0;f<=NF;f++)put(makeFret(s,f),row(s),fretPos(f))}put(Object.assign(document.createElement('div'),{className:'corner'}),7,lead);for(let f=0;f<=NF;f++)put(num(f),7,fretPos(f))}
  else{for(let s=0;s<6;s++)put(lab(s),lead,s+2);put(Object.assign(document.createElement('div'),{className:'corner'}),lead,1);for(let f=0;f<=NF;f++){put(num(f),fretPos(f),1);for(let s=0;s<6;s++)put(makeFret(s,f),fretPos(f),s+2)}}
  document.querySelectorAll('[data-dir]').forEach(x=>x.classList.toggle('primary',x.dataset.dir===orientation));$('boardHint').textContent=vert?`Tap any fret to hear it. Scroll ${orientation==='U'?'down':'up'} for higher frets.`:'Tap any fret to hear it. Swipe sideways for higher frets.';
- $('stats').textContent=`${unlocked.size} unlocked · ${correct}/${attempts} correct`;updateBoxUI(AB);drawBoxOverlay(AB)}
+ statsText();updateBoxUI(AB);drawBoxOverlay(AB)}
 function makeFret(s,f){const m=tuning[s]+f,k=key(s,f),n=info(m),isSel=selected&&selected.s===s&&selected.f===f,btn=document.createElement('button');
  btn.className='fret'+(f===0?' open':'')+(INLAY[f]?' inlay':'')+(isSel&&(mode!=='hear'||answered)?' selected':'');btn.dataset.s=s;btn.dataset.f=f;
  btn.setAttribute('aria-label',`${stringNames[s]} string, fret ${f}`);
@@ -230,7 +286,9 @@ function makeFret(s,f){const m=tuning[s]+f,k=key(s,f),n=info(m),isSel=selected&&
  const dot=document.createElement('span');dot.className='note';
  const now=performance.now(),fl=flash&&flash.until>now?flash:null;
  const showLab=(cls,force)=>{dot.className='note lab '+cls;const d=n?n.deg:null;dot.style.background=d?degColor(d):'#d9d7d1';const v=force||$('display').value;dot.innerHTML=v==='both'?`${nameOf(m)}<small>${d||''}</small>`:v==='note'?nameOf(m):(d||'—')};
+ const qk=quizActive()&&SQ.keys.has(k),qOpen=qk&&!SQ.solved.has(k);
  if(isSel&&!answered&&mode!=='hear'){dot.className='note target';dot.textContent='?'}
+ else if(qk){if(qOpen){const nx=SQ.order[quizNextIdx()];dot.className='note qz'+(SQ.open&&SQ.open.k===k?' qopen':nx&&key(nx.s,nx.f)===k&&!SQ.open?' qnext':'');dot.textContent='?';btn.setAttribute('aria-label',`${stringNames[s]} string, fret ${f}: unknown note, tap to answer`)}else showLab('box'+(SQ.lastSolved===k?' qsolved':''),'both')}
  else if(fl&&pc(m)===fl.pc)showLab('same');
  else if(reveal!==null&&pc(m)===reveal)showLab('same');
  else if(boxKeys.has(k))showLab('box','both');
@@ -238,7 +296,7 @@ function makeFret(s,f){const m=tuning[s]+f,k=key(s,f),n=info(m),isSel=selected&&
  else if(unlocked.has(k))showLab('locked');
  else if(n)dot.textContent='•';else dot.className='note empty';
  if(boxKeys.size&&!boxKeys.has(k)&&!/target|same/.test(dot.className))dot.classList.add('dim');
- btn.append(dot);btn.onclick=()=>tapPlay(m);return btn}
+ btn.append(dot);btn.onclick=()=>{if(qOpen)quizAsk(s,f);else tapPlay(m)};return btn}
 function scrollToFret(s,f,smooth=true){requestAnimationFrame(()=>{const el=document.querySelector(`#board .fret[data-s="${s}"][data-f="${f}"]`);if(!el)return;const sc=$('scroller');
  const left=el.offsetLeft-(sc.clientWidth-el.offsetWidth)/2;sc.style.scrollBehavior=smooth?'smooth':'auto';sc.scrollLeft=Math.max(0,left);
  const beh=smooth?'smooth':'auto';if(orientation==='S'||orientation==='R'||orientation==='L'){const bt=$('board').getBoundingClientRect().top;if(bt<0||bt>innerHeight*0.3)window.scrollBy({top:bt-10,behavior:beh})}else{const r=el.getBoundingClientRect();if(r.top<8||r.bottom>innerHeight-8)window.scrollBy({top:r.top-innerHeight*0.35,behavior:beh})}})}
@@ -321,14 +379,15 @@ function setMode(md){mode=md;document.querySelectorAll('[data-mode]').forEach(b=
  if(md!=='play'&&micOn)stopMic();clearTimeout(autoTimer);question=null;selected=null;answered=false;reveal=null;flash=null;$('choices').innerHTML='';$('hintBox').textContent='';
  $('question').textContent=md==='play'?'Tap 🎤 Start listening (or ▶ / 🎲) to get a note to play.':md==='hear'?'Press ▶ or 🎲: you will HEAR a note with its position hidden.':'Press ▶ Step up the scale or 🎲 Random note to get a question.';
  $('feedback').textContent=md==='play'?'Uses your mic. Hold the phone near the guitar in a quiet room.':md==='hear'?'Tip: turn on the soft root drone so you hear each note against the key.':'Pick a practice mode, then press ▶ or 🎲.';$('target').textContent='—';draw()}
-function reset(){unlocked.clear();attempts=0;correct=0;stepIdx=-1;updateScale();setMode(mode);startDroneIfOn()}
+function reset(){unlocked.clear();attempts=0;correct=0;stepIdx=-1;updateScale();if(isPent()&&typeof boxSel==='number'&&quizPref)quizStart(pentShape(boxSel));else quizStop();setMode(mode);startDroneIfOn()}
 function startDroneIfOn(){if($('drone').checked&&!micOn)startDrone()}
 document.querySelectorAll('[data-dir]').forEach(b=>b.onclick=()=>{orientation=b.dataset.dir;draw();if(question&&selected)scrollToFret(selected.s,selected.f,false);else scrollToNut()});
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
-$('next').onclick=nextQ;$('random').onclick=randomQ;$('root').onchange=reset;$('scale').onchange=reset;$('display').onchange=()=>{draw();if(question&&mode==='hear'){/* refresh labels */}};$('reset').onclick=reset;
+$('next').onclick=()=>{if(quizActive()&&mode==='see')quizGuided();else nextQ()};$('random').onclick=()=>{if(quizActive()&&mode==='see')quizRandom();else randomQ()};$('root').onchange=reset;$('scale').onchange=reset;$('display').onchange=()=>{draw();if(question&&mode==='hear'){/* refresh labels */}};$('reset').onclick=reset;
 $('replay').onclick=()=>{if(question)play(question.m)};$('rootnote').onclick=playRootThenNote;
-document.querySelectorAll('[data-box]').forEach(x=>x.onclick=()=>{const v=x.dataset.box;boxSel=v==='all'||v==='off'?v:+v;draw();if(typeof boxSel==='number'){const bx=activeBoxes()[0];scrollToFret(0,Math.round((bx.lo+bx.hi)/2))}else scrollToNut()});
-let rzT=null;addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>drawBoxOverlay(activeBoxes()),120)});
+document.querySelectorAll('[data-box]').forEach(x=>x.onclick=()=>{const v=x.dataset.box;pickBox(v==='all'||v==='off'?v:+v)});
+let rzT=null;addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{drawBoxOverlay(activeBoxes());placePop()},120)});
+let popRaf=0;$('scroller').addEventListener('scroll',()=>{cancelAnimationFrame(popRaf);popRaf=requestAnimationFrame(placePop)},{passive:true});$('qpopX').onclick=quizClose;
 $('drone').onchange=()=>{if($('drone').checked)startDrone();else stopDrone()};
 $('mic').onclick=()=>{if(micOn)stopMic();else startMic()};
 $('exact').onchange=()=>{if(question)choose(question.s,question.f)};
