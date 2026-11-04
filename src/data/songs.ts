@@ -8,6 +8,8 @@ import { DEMO_UNLOCK, FREE } from './mode'
 export const SONG_UNLOCK_POINTS = 250
 /** Points needed to unlock song 2 (subscriber build only). */
 export const SONG_2_UNLOCK_POINTS = 500
+/** Points needed to unlock song 3 (subscriber build only). */
+export const SONG_3_UNLOCK_POINTS = 750
 
 export const DOWNLOAD_URL = 'https://www.djalevy8.com/download'
 export const SUPPORT_URL = 'https://x.com/DJAlevy8/creator-subscriptions/subscribe'
@@ -45,8 +47,18 @@ export const SONG_2: Song = {
   subscriberOnly: true,
 }
 
+export const SONG_3: Song = {
+  id: 'light-waves',
+  title: 'Light Waves',
+  artist: 'DJ ALEVY8',
+  audio: asset('music/light-waves.mp3'),
+  cover: asset('music/light-waves.jpg'),
+  threshold: SONG_3_UNLOCK_POINTS,
+  subscriberOnly: true,
+}
+
 /** All songs, in unlock order. */
-export const ALL_SONGS: Song[] = [SONG_1, SONG_2]
+export const ALL_SONGS: Song[] = [SONG_1, SONG_2, SONG_3]
 /** Songs available in this build (free build hides subscriber-only songs). */
 export const SONGS: Song[] = FREE ? ALL_SONGS.filter((s) => !s.subscriberOnly) : ALL_SONGS
 

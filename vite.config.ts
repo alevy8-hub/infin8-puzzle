@@ -4,7 +4,12 @@ import react from '@vitejs/plugin-react'
 import { defineConfig, type Plugin, type ResolvedConfig } from 'vite'
 
 // Subscriber-only songs: never shipped in the free build (VITE_FREE=1).
-const SUBSCRIBER_ONLY_FILES = ['music/breaking.mp3', 'music/breaking.jpg']
+const SUBSCRIBER_ONLY_FILES = [
+  'music/breaking.mp3',
+  'music/breaking.jpg',
+  'music/light-waves.mp3',
+  'music/light-waves.jpg',
+]
 
 function stripSubscriberMusic(): Plugin {
   let config: ResolvedConfig
