@@ -153,10 +153,10 @@ function App() {
   const [gain, setGain] = useState<Award | null>(null)
   // song unlocks (subscriber build only); persisted, never removed once earned
   const [unlocks, setUnlocks] = useState<Unlocks>(() =>
-    FREE ? {} : DEMO_UNLOCK ? { [SONG_1.id]: { at: new Date().toISOString(), seen: false } } : loadUnlocks(),
+    DEMO_UNLOCK ? { [SONG_1.id]: { at: new Date().toISOString(), seen: false } } : loadUnlocks(),
   )
   const [songOpen, setSongOpen] = useState(false)
-  const songUnlocked = !FREE && Boolean(unlocks[SONG_1.id])
+  const songUnlocked = Boolean(unlocks[SONG_1.id])
   const celebrate = songUnlocked && !unlocks[SONG_1.id].seen
 
   useEffect(() => {
@@ -167,6 +167,14 @@ function App() {
       setUnlocks(next)
     }
   }, [points.total, unlocks])
+
+  // free build: finishing the free 8 unlocks song 1 (points are untouched)
+  useEffect(() => {
+    if (!FREE || screen !== 'round-complete' || unlocks[SONG_1.id]) return
+    const next = { ...unlocks, [SONG_1.id]: { at: new Date().toISOString(), seen: false } }
+    saveUnlocks(next)
+    setUnlocks(next)
+  }, [screen, unlocks])
 
   const closeSong = useCallback(() => {
     setSongOpen(false)
@@ -180,7 +188,7 @@ function App() {
   }, [])
 
   const songCard =
-    celebrate || (songOpen && songUnlocked) ? <SongCard song={SONG_1} celebrate={celebrate} onClose={closeSong} /> : null
+    celebrate || (songOpen && songUnlocked) ? <SongCard song={SONG_1} celebrate={celebrate} free={FREE} onClose={closeSong} /> : null
   const demoBanner = DEMO_UNLOCK ? (
     <div className="in8-demo-banner" role="status">
       Test mode — your real points aren't changed
@@ -355,6 +363,7 @@ function App() {
               Want unlimited? Endless Beginner, Intermediate and Advanced puzzles with points and daily streaks, plus
               my book deep dives.
             </p>
+            {songRow}
             <div className="in8-complete-actions">
               <a className="in8-submit in8-share" href={SUBSCRIBE_URL} target="_blank" rel="noopener noreferrer">
                 Subscribe for $5/mo

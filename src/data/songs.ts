@@ -1,4 +1,4 @@
-import { DEMO_UNLOCK, storageKey } from './mode'
+import { DEMO_UNLOCK } from './mode'
 
 /**
  * Points needed to unlock song 1. Change this one number to retune.
@@ -33,7 +33,8 @@ export const SONG_1: Song = {
 
 export type Unlocks = Record<string, { at: string; seen: boolean }>
 
-const KEY = storageKey('infin8-puzzle-unlocks-v1')
+// Shared by the free and subscriber builds (same origin): a song unlocked in free also shows for subscribers.
+const KEY = 'infin8-puzzle-unlocks-v1'
 
 export function loadUnlocks(): Unlocks {
   try {
