@@ -10,6 +10,8 @@ export const SONG_UNLOCK_POINTS = 250
 export const SONG_2_UNLOCK_POINTS = 500
 /** Points needed to unlock song 3 (subscriber build only). */
 export const SONG_3_UNLOCK_POINTS = 750
+/** Points needed to unlock song 4 (subscriber build only). */
+export const SONG_4_UNLOCK_POINTS = 1000
 
 export const DOWNLOAD_URL = 'https://www.djalevy8.com/download'
 export const SUPPORT_URL = 'https://x.com/DJAlevy8/creator-subscriptions/subscribe'
@@ -57,8 +59,18 @@ export const SONG_3: Song = {
   subscriberOnly: true,
 }
 
+export const SONG_4: Song = {
+  id: 'shudder',
+  title: 'Shudder',
+  artist: 'DJ ALEVY8',
+  audio: asset('music/shudder.mp3'),
+  cover: asset('music/shudder.jpg'),
+  threshold: SONG_4_UNLOCK_POINTS,
+  subscriberOnly: true,
+}
+
 /** All songs, in unlock order. */
-export const ALL_SONGS: Song[] = [SONG_1, SONG_2, SONG_3]
+export const ALL_SONGS: Song[] = [SONG_1, SONG_2, SONG_3, SONG_4]
 /** Songs available in this build (free build hides subscriber-only songs). */
 export const SONGS: Song[] = FREE ? ALL_SONGS.filter((s) => !s.subscriberOnly) : ALL_SONGS
 

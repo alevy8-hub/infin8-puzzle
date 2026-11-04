@@ -9,6 +9,8 @@ const SUBSCRIBER_ONLY_FILES = [
   'music/breaking.jpg',
   'music/light-waves.mp3',
   'music/light-waves.jpg',
+  'music/shudder.mp3',
+  'music/shudder.jpg',
 ]
 
 function stripSubscriberMusic(): Plugin {

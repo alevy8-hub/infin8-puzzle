@@ -16,12 +16,14 @@ export const storageKey = (key: string): string => (FREE ? key.replace('infin8-p
 const DEMO_PARAM: string | null =
   FREE || typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('demo')
 
-/** `?demo=unlock` → song 1 card; `?demo=unlock2` or `?demo=breaking` → song 2; `?demo=unlock3` or `?demo=lightwaves` → song 3. null = not a demo. */
+/** `?demo=unlock` → song 1 card; `?demo=unlock2` or `?demo=breaking` → song 2; `?demo=unlock3` or `?demo=lightwaves` → song 3; `?demo=unlock4` or `?demo=shudder` → song 4. null = not a demo. */
 export const DEMO_SONG_INDEX: number | null =
   DEMO_PARAM === 'unlock' ? 0 : DEMO_PARAM === 'unlock2' || DEMO_PARAM === 'breaking'
       ? 1
       : DEMO_PARAM === 'unlock3' || DEMO_PARAM === 'lightwaves'
         ? 2
-        : null
+        : DEMO_PARAM === 'unlock4' || DEMO_PARAM === 'shudder'
+          ? 3
+          : null
 
 export const DEMO_UNLOCK: boolean = DEMO_SONG_INDEX !== null
