@@ -9,7 +9,7 @@ import { awardSolve, currentStreak, formatPoints, loadPoints, savePoints, type A
 import { beginnerPuzzles, type Puzzle } from './data/puzzles'
 import { row } from './data/build'
 import { randomRoundSeed } from './data/random'
-import { FREE, SUBSCRIBE_URL } from './data/mode'
+import { DEMO_UNLOCK, FREE, SUBSCRIBE_URL } from './data/mode'
 import { loadUnlocks, saveUnlocks, SONG_1, withEarnedUnlocks, type Unlocks } from './data/songs'
 import { SongCard, SongProgress } from './components/SongUnlock'
 import './App.css'
@@ -152,13 +152,15 @@ function App() {
   // points from the latest correct answer (null on shared puzzles: no points there)
   const [gain, setGain] = useState<Award | null>(null)
   // song unlocks (subscriber build only); persisted, never removed once earned
-  const [unlocks, setUnlocks] = useState<Unlocks>(() => (FREE ? {} : loadUnlocks()))
+  const [unlocks, setUnlocks] = useState<Unlocks>(() =>
+    FREE ? {} : DEMO_UNLOCK ? { [SONG_1.id]: { at: new Date().toISOString(), seen: false } } : loadUnlocks(),
+  )
   const [songOpen, setSongOpen] = useState(false)
   const songUnlocked = !FREE && Boolean(unlocks[SONG_1.id])
   const celebrate = songUnlocked && !unlocks[SONG_1.id].seen
 
   useEffect(() => {
-    if (FREE) return
+    if (FREE || DEMO_UNLOCK) return
     const next = withEarnedUnlocks(unlocks, points.total)
     if (next !== unlocks) {
       saveUnlocks(next)
@@ -172,15 +174,23 @@ function App() {
       const e = prev[SONG_1.id]
       if (!e || e.seen) return prev
       const next = { ...prev, [SONG_1.id]: { ...e, seen: true } }
-      saveUnlocks(next)
+      if (!DEMO_UNLOCK) saveUnlocks(next)
       return next
     })
   }, [])
 
   const songCard =
     celebrate || (songOpen && songUnlocked) ? <SongCard song={SONG_1} celebrate={celebrate} onClose={closeSong} /> : null
+  const demoBanner = DEMO_UNLOCK ? (
+    <div className="in8-demo-banner" role="status">
+      Test mode — your real points aren't changed
+    </div>
+  ) : null
   const songRow = (
+    <>
+    {demoBanner}
     <SongProgress song={SONG_1} total={points.total} unlocked={songUnlocked} free={FREE} onOpen={() => setSongOpen(true)} />
+    </>
   )
 
   const update = (id: LevelId, fn: (p: LevelProgress) => LevelProgress) => {

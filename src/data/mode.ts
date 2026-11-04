@@ -8,3 +8,10 @@ export const SUBSCRIBE_URL = 'https://x.com/DJAlevy8/creator-subscriptions/subsc
 
 /** Free build keeps its own saves so it never touches subscriber progress or points on the same origin. */
 export const storageKey = (key: string): string => (FREE ? key.replace('infin8-puzzle-', 'infin8-puzzle-free-') : key)
+
+/**
+ * Test link `?demo=unlock` (subscriber build): shows the song unlock card at once, purely in memory.
+ * Never writes localStorage (every save path checks this), so real points/unlocks stay untouched.
+ */
+export const DEMO_UNLOCK: boolean =
+  !FREE && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'unlock'

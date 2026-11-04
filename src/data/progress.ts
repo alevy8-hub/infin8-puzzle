@@ -1,5 +1,5 @@
 import type { LevelId } from './levels'
-import { storageKey } from './mode'
+import { DEMO_UNLOCK, storageKey } from './mode'
 
 export type RoundState = {
   number: number
@@ -63,6 +63,7 @@ export function loadProgress(): Progress {
 
 export function saveProgress(p: Progress): void {
   try {
+    if (DEMO_UNLOCK) return
     localStorage.setItem(KEY, JSON.stringify(p))
   } catch {
     /* ignore (private mode etc.) */

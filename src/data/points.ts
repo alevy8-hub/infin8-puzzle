@@ -1,5 +1,5 @@
 import type { LevelId } from './levels'
-import { storageKey } from './mode'
+import { DEMO_UNLOCK, storageKey } from './mode'
 
 /** Base points per solve. */
 export const BASE_POINTS: Record<LevelId, number> = { beginner: 10, intermediate: 20, advanced: 40 }
@@ -66,6 +66,7 @@ export function loadPoints(): PointsState {
 
 export function savePoints(p: PointsState): void {
   try {
+    if (DEMO_UNLOCK) return
     localStorage.setItem(KEY, JSON.stringify(p))
   } catch {
     /* ignore (private mode etc.) */

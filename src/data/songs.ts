@@ -1,4 +1,4 @@
-import { storageKey } from './mode'
+import { DEMO_UNLOCK, storageKey } from './mode'
 
 /**
  * Points needed to unlock song 1. Change this one number to retune.
@@ -58,6 +58,7 @@ export function loadUnlocks(): Unlocks {
 
 export function saveUnlocks(u: Unlocks): void {
   try {
+    if (DEMO_UNLOCK) return
     localStorage.setItem(KEY, JSON.stringify(u))
   } catch {
     /* ignore (private mode etc.) */
