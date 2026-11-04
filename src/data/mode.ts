@@ -13,5 +13,11 @@ export const storageKey = (key: string): string => (FREE ? key.replace('infin8-p
  * Test link `?demo=unlock` (subscriber build): shows the song unlock card at once, purely in memory.
  * Never writes localStorage (every save path checks this), so real points/unlocks stay untouched.
  */
-export const DEMO_UNLOCK: boolean =
-  !FREE && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'unlock'
+const DEMO_PARAM: string | null =
+  FREE || typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('demo')
+
+/** `?demo=unlock` → song 1 card; `?demo=unlock2` or `?demo=breaking` → song 2 card. null = not a demo. */
+export const DEMO_SONG_INDEX: number | null =
+  DEMO_PARAM === 'unlock' ? 0 : DEMO_PARAM === 'unlock2' || DEMO_PARAM === 'breaking' ? 1 : null
+
+export const DEMO_UNLOCK: boolean = DEMO_SONG_INDEX !== null

@@ -9,8 +9,8 @@ import { awardSolve, currentStreak, formatPoints, loadPoints, savePoints, type A
 import { beginnerPuzzles, type Puzzle } from './data/puzzles'
 import { row } from './data/build'
 import { randomRoundSeed } from './data/random'
-import { DEMO_UNLOCK, FREE, SUBSCRIBE_URL } from './data/mode'
-import { loadUnlocks, saveUnlocks, SONG_1, withEarnedUnlocks, type Unlocks } from './data/songs'
+import { DEMO_SONG_INDEX, DEMO_UNLOCK, FREE, SUBSCRIBE_URL } from './data/mode'
+import { loadUnlocks, saveUnlocks, SONG_1, SONGS, withEarnedUnlocks, type Unlocks } from './data/songs'
 import { SongCard, SongProgress } from './components/SongUnlock'
 import './App.css'
 
@@ -152,12 +152,19 @@ function App() {
   // points from the latest correct answer (null on shared puzzles: no points there)
   const [gain, setGain] = useState<Award | null>(null)
   // song unlocks (subscriber build only); persisted, never removed once earned
-  const [unlocks, setUnlocks] = useState<Unlocks>(() =>
-    DEMO_UNLOCK ? { [SONG_1.id]: { at: new Date().toISOString(), seen: false } } : loadUnlocks(),
-  )
-  const [songOpen, setSongOpen] = useState(false)
-  const songUnlocked = Boolean(unlocks[SONG_1.id])
-  const celebrate = songUnlocked && !unlocks[SONG_1.id].seen
+  const [unlocks, setUnlocks] = useState<Unlocks>(() => {
+    const demo = DEMO_SONG_INDEX
+    if (demo === null) return loadUnlocks()
+    // demo: earlier songs shown as already seen, the demo song as freshly unlocked (memory only)
+    const at = new Date().toISOString()
+    const u: Unlocks = {}
+    SONGS.slice(0, demo + 1).forEach((s, i) => (u[s.id] = { at, seen: i < demo }))
+    return u
+  })
+  // id of the song opened from "My songs" (replay)
+  const [songOpen, setSongOpen] = useState<string | null>(null)
+  // newly earned songs celebrate one at a time, in unlock order
+  const celebrateSong = SONGS.find((s) => unlocks[s.id] && !unlocks[s.id].seen) ?? null
 
   useEffect(() => {
     if (FREE || DEMO_UNLOCK) return
@@ -176,19 +183,28 @@ function App() {
     setUnlocks(next)
   }, [screen, unlocks])
 
-  const closeSong = useCallback(() => {
-    setSongOpen(false)
+  const closeSong = useCallback((id: string) => {
+    setSongOpen(null)
     setUnlocks((prev) => {
-      const e = prev[SONG_1.id]
+      const e = prev[id]
       if (!e || e.seen) return prev
-      const next = { ...prev, [SONG_1.id]: { ...e, seen: true } }
+      const next = { ...prev, [id]: { ...e, seen: true } }
       if (!DEMO_UNLOCK) saveUnlocks(next)
       return next
     })
   }, [])
 
-  const songCard =
-    celebrate || (songOpen && songUnlocked) ? <SongCard song={SONG_1} celebrate={celebrate} free={FREE} onClose={closeSong} /> : null
+  const openSong = songOpen ? SONGS.find((s) => s.id === songOpen && unlocks[s.id]) : undefined
+  const cardSong = celebrateSong ?? openSong ?? null
+  const songCard = cardSong ? (
+    <SongCard
+      key={cardSong.id}
+      song={cardSong}
+      celebrate={cardSong === celebrateSong}
+      free={FREE}
+      onClose={() => closeSong(cardSong.id)}
+    />
+  ) : null
   const demoBanner = DEMO_UNLOCK ? (
     <div className="in8-demo-banner" role="status">
       Test mode — your real points aren't changed
@@ -197,7 +213,7 @@ function App() {
   const songRow = (
     <>
     {demoBanner}
-    <SongProgress song={SONG_1} total={points.total} unlocked={songUnlocked} free={FREE} onOpen={() => setSongOpen(true)} />
+    <SongProgress songs={SONGS} unlocks={unlocks} total={points.total} free={FREE} onOpen={setSongOpen} />
     </>
   )
 

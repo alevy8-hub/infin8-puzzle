@@ -1,4 +1,4 @@
-import { DEMO_UNLOCK } from './mode'
+import { DEMO_UNLOCK, FREE } from './mode'
 
 /**
  * Points needed to unlock song 1. Change this one number to retune.
@@ -6,6 +6,8 @@ import { DEMO_UNLOCK } from './mode'
  * so 250 ≈ two Beginner rounds (or one Intermediate round) in a good session, or a couple of days of casual play.
  */
 export const SONG_UNLOCK_POINTS = 250
+/** Points needed to unlock song 2 (subscriber build only). */
+export const SONG_2_UNLOCK_POINTS = 500
 
 export const DOWNLOAD_URL = 'https://www.djalevy8.com/download'
 export const SUPPORT_URL = 'https://x.com/DJAlevy8/creator-subscriptions/subscribe'
@@ -18,6 +20,8 @@ export type Song = {
   cover: string
   /** total points needed */
   threshold: number
+  /** never unlockable (or shown) in the free build */
+  subscriberOnly?: boolean
 }
 
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`
@@ -30,6 +34,21 @@ export const SONG_1: Song = {
   cover: asset('music/above-the-silence.jpg'),
   threshold: SONG_UNLOCK_POINTS,
 }
+
+export const SONG_2: Song = {
+  id: 'breaking',
+  title: 'Breaking',
+  artist: 'DJ ALEVY8',
+  audio: asset('music/breaking.mp3'),
+  cover: asset('music/breaking.jpg'),
+  threshold: SONG_2_UNLOCK_POINTS,
+  subscriberOnly: true,
+}
+
+/** All songs, in unlock order. */
+export const ALL_SONGS: Song[] = [SONG_1, SONG_2]
+/** Songs available in this build (free build hides subscriber-only songs). */
+export const SONGS: Song[] = FREE ? ALL_SONGS.filter((s) => !s.subscriberOnly) : ALL_SONGS
 
 export type Unlocks = Record<string, { at: string; seen: boolean }>
 
@@ -66,8 +85,12 @@ export function saveUnlocks(u: Unlocks): void {
   }
 }
 
-/** Adds the song once total points reach its threshold; never removes an unlock. */
+/** Adds every song whose threshold the total reaches; never removes an unlock. Returns `u` unchanged if nothing new. */
 export function withEarnedUnlocks(u: Unlocks, totalPoints: number, now: Date = new Date()): Unlocks {
-  if (u[SONG_1.id] || totalPoints < SONG_1.threshold) return u
-  return { ...u, [SONG_1.id]: { at: now.toISOString(), seen: false } }
+  let out = u
+  for (const song of SONGS) {
+    if (out[song.id] || totalPoints < song.threshold) continue
+    out = { ...out, [song.id]: { at: now.toISOString(), seen: false } }
+  }
+  return out
 }
