@@ -1,0 +1,215 @@
+/* progress / My songs row (home + round complete) */
+.in8-song-row {
+  appearance: none;
+  width: 100%;
+  box-sizing: border-box;
+  display: grid;
+  gap: 0.4rem;
+  margin: -0.4rem 0 1rem;
+  padding: 0.7rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.06);
+  color: #f5f5f5;
+  font: inherit;
+  text-align: left;
+}
+
+.in8-song-row-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.in8-song-row-sub {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 245, 0.55);
+}
+
+.in8-song-row--locked {
+  border-color: rgba(245, 245, 245, 0.12);
+  background: transparent;
+  opacity: 0.75;
+}
+
+.in8-song-bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(245, 245, 245, 0.1);
+  overflow: hidden;
+}
+
+.in8-song-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a88420, #e0c15a);
+  transition: width 0.4s ease;
+}
+
+.in8-song-row--mine {
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  border-color: rgba(212, 175, 55, 0.6);
+}
+
+.in8-song-row--mine:hover {
+  background: rgba(212, 175, 55, 0.12);
+}
+
+.in8-song-row--mine:focus-visible {
+  outline: 2px solid #d4af37;
+  outline-offset: 2px;
+}
+
+.in8-song-row-cover {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.in8-song-row-text {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.in8-song-row-kicker {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+.in8-song-row-artist {
+  font-weight: 500;
+  color: rgba(245, 245, 245, 0.6);
+}
+
+.in8-song-row-play {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1.5px solid #d4af37;
+  color: #d4af37;
+  font-size: 0.8rem;
+}
+
+/* unlock card */
+.in8-song-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.82);
+  animation: in8-song-fade 0.25s ease;
+}
+
+.in8-song-card {
+  width: 100%;
+  max-width: 400px;
+  margin: auto 0;
+  box-sizing: border-box;
+  padding: 1.3rem 1.15rem 0.8rem;
+  border-radius: 18px;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  background:
+    radial-gradient(ellipse 90% 45% at 50% 0%, rgba(212, 175, 55, 0.22), transparent 70%),
+    linear-gradient(180deg, #141414, #080808);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  color: #f5f5f5;
+}
+
+.in8-song-card:focus {
+  outline: none;
+}
+
+.in8-song-card--celebrate {
+  border-color: #d4af37;
+  box-shadow:
+    0 0 0 1px rgba(212, 175, 55, 0.25),
+    0 0 40px rgba(212, 175, 55, 0.25),
+    0 18px 50px rgba(0, 0, 0, 0.6);
+  animation: in8-song-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.in8-song-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+.in8-song-title {
+  margin: 0 0 0.9rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.in8-song-cover {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  aspect-ratio: 1;
+  margin: 0 auto 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  object-fit: cover;
+}
+
+.in8-song-meta {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.in8-song-meta-artist {
+  font-weight: 500;
+  color: rgba(245, 245, 245, 0.6);
+}
+
+.in8-song-audio {
+  display: block;
+  width: 100%;
+  margin: 0 0 1rem;
+  color-scheme: dark;
+}
+
+@keyframes in8-song-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes in8-song-pop {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .in8-song-overlay,
+  .in8-song-card--celebrate {
+    animation: none;
+  }
+}

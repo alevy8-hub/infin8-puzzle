@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnswerInput } from './components/AnswerInput'
 import { Feedback, type FeedbackState } from './components/Feedback'
 import { PuzzleBoard } from './components/PuzzleBoard'
@@ -10,6 +10,8 @@ import { beginnerPuzzles, type Puzzle } from './data/puzzles'
 import { row } from './data/build'
 import { randomRoundSeed } from './data/random'
 import { FREE, SUBSCRIBE_URL } from './data/mode'
+import { loadUnlocks, saveUnlocks, SONG_1, withEarnedUnlocks, type Unlocks } from './data/songs'
+import { SongCard, SongProgress } from './components/SongUnlock'
 import './App.css'
 
 type Screen = 'start' | 'playing' | 'round-complete' | 'shared'
@@ -149,6 +151,37 @@ function App() {
   const [points, setPoints] = useState<PointsState>(loadPoints)
   // points from the latest correct answer (null on shared puzzles: no points there)
   const [gain, setGain] = useState<Award | null>(null)
+  // song unlocks (subscriber build only); persisted, never removed once earned
+  const [unlocks, setUnlocks] = useState<Unlocks>(() => (FREE ? {} : loadUnlocks()))
+  const [songOpen, setSongOpen] = useState(false)
+  const songUnlocked = !FREE && Boolean(unlocks[SONG_1.id])
+  const celebrate = songUnlocked && !unlocks[SONG_1.id].seen
+
+  useEffect(() => {
+    if (FREE) return
+    const next = withEarnedUnlocks(unlocks, points.total)
+    if (next !== unlocks) {
+      saveUnlocks(next)
+      setUnlocks(next)
+    }
+  }, [points.total, unlocks])
+
+  const closeSong = useCallback(() => {
+    setSongOpen(false)
+    setUnlocks((prev) => {
+      const e = prev[SONG_1.id]
+      if (!e || e.seen) return prev
+      const next = { ...prev, [SONG_1.id]: { ...e, seen: true } }
+      saveUnlocks(next)
+      return next
+    })
+  }, [])
+
+  const songCard =
+    celebrate || (songOpen && songUnlocked) ? <SongCard song={SONG_1} celebrate={celebrate} onClose={closeSong} /> : null
+  const songRow = (
+    <SongProgress song={SONG_1} total={points.total} unlocked={songUnlocked} free={FREE} onOpen={() => setSongOpen(true)} />
+  )
 
   const update = (id: LevelId, fn: (p: LevelProgress) => LevelProgress) => {
     setProgress((prev) => {
@@ -263,6 +296,7 @@ function App() {
           <Brand />
           <p className="in8-series">Puzzle Series</p>
           <PointsRow points={points} />
+          {songRow}
           <p className="in8-pick">{FREE ? 'Free · my original 8 Beginner puzzles' : 'Choose your level · new puzzles every round'}</p>
           <ul className="in8-sections">
             {levels.map((l, i) => {
@@ -291,6 +325,7 @@ function App() {
           </ul>
         </header>
         <Footer />
+        {songCard}
       </div>
     )
   }
@@ -324,6 +359,7 @@ function App() {
           </div>
         </header>
         <Footer />
+        {songCard}
       </div>
     )
   }
@@ -360,6 +396,7 @@ function App() {
             Best {lp.bestScore ?? last.firstTry}/{ROUND_SIZE} · {lp.roundsCleared} round
             {lp.roundsCleared === 1 ? '' : 's'} cleared
           </p>
+          {songRow}
           <div className="in8-complete-actions">
             <a className="in8-submit in8-share" href={shareUrl} target="_blank" rel="noopener noreferrer">
               Share on 𝕏
@@ -378,6 +415,7 @@ function App() {
           </div>
         </header>
         <Footer />
+        {songCard}
       </div>
     )
   }
@@ -464,6 +502,7 @@ function App() {
       </main>
 
       <Footer />
+      {songCard}
     </div>
   )
 }
