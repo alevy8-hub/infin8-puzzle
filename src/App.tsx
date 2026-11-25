@@ -4,7 +4,7 @@ import { Feedback, type FeedbackState } from './components/Feedback'
 import { PuzzleBoard } from './components/PuzzleBoard'
 import { generatePuzzle, parseCode } from './data/generator'
 import { levelById, levels, ROUND_SIZE, roundPuzzle, type LevelId } from './data/levels'
-import { loadProgress, saveProgress, type LevelProgress, type Progress } from './data/progress'
+import { loadProgress, saveProgress, type LevelProgress, type Progress, type RoundState } from './data/progress'
 import { awardSolve, currentStreak, formatPoints, loadPoints, savePoints, type Award, type PointsState } from './data/points'
 import { beginnerPuzzles, type Puzzle } from './data/puzzles'
 import { row } from './data/build'
@@ -102,6 +102,78 @@ function Footer() {
   )
 }
 
+function appClass(): string {
+  return window.self !== window.top ? 'in8-app in8-app--embedded' : 'in8-app'
+}
+
+function newBeginnerRound(p: LevelProgress): RoundState {
+  return {
+    number: FREE ? 1 : p.roundsCleared + 1,
+    seed: randomRoundSeed(),
+    index: 0,
+    misses: 0,
+    firstTry: 0,
+    missedCurrent: false,
+  }
+}
+
+/** Open the current Beginner puzzle on load so visitors aren't asked to tap Beginner first. */
+function bootApp() {
+  const shared = sharedFromUrl()
+  const loaded = loadProgress()
+  if (shared || SIZE_CHECK) {
+    return {
+      shared,
+      progress: loaded,
+      screen: (shared ? 'shared' : 'start') as Screen,
+      levelId: (shared?.level ?? 'beginner') as LevelId,
+      active: { number: 0, seed: 0 },
+      viewIndex: 0,
+      choices: shared ? shuffle(shared.puzzle.choices) : [],
+    }
+  }
+  const current = loaded.beginner.round
+  const round = current ?? newBeginnerRound(loaded.beginner)
+  const progress = current ? loaded : { ...loaded, beginner: { ...loaded.beginner, round } }
+  if (!current) saveProgress(progress)
+  const puzzle = roundPuzzle('beginner', round.number, round.seed, round.index)
+  return {
+    shared: null,
+    progress,
+    screen: 'playing' as Screen,
+    levelId: 'beginner' as LevelId,
+    active: { number: round.number, seed: round.seed },
+    viewIndex: round.index,
+    choices: levelById('beginner').multipleChoice ? shuffle(puzzle.choices) : [],
+  }
+}
+
+function LevelTabs({ current, onPick }: { current: LevelId; onPick: (id: LevelId) => void }) {
+  return (
+    <div className="in8-level-tabs" role="tablist" aria-label="Puzzle level">
+      {levels.map((l, i) => {
+        const unlocked = isUnlocked(i)
+        const active = l.id === current
+        return (
+          <button
+            key={l.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            className={`in8-level-tab${active ? ' in8-level-tab--active' : ''}${unlocked ? '' : ' in8-level-tab--locked'}`}
+            disabled={!unlocked}
+            onClick={() => {
+              if (unlocked && !active) onPick(l.id)
+            }}
+          >
+            {l.name}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function levelStatus(p: LevelProgress, unlocked: boolean, prevName?: string): string {
   if (!unlocked) return `Locked · clear ${prevName && /^[AEIOU]/.test(prevName) ? 'an' : 'a'} ${prevName} round`
   if (p.round) return `Continue · Round ${p.round.number} · ${p.round.index}/${ROUND_SIZE}`
@@ -124,18 +196,19 @@ function PointsRow({ points }: { points: PointsState }) {
 }
 
 function App() {
-  const [shared] = useState(sharedFromUrl)
-  const [progress, setProgress] = useState<Progress>(loadProgress)
-  const [screen, setScreen] = useState<Screen>(shared ? 'shared' : 'start')
-  const [levelId, setLevelId] = useState<LevelId>(shared?.level ?? 'beginner')
+  const [boot] = useState(bootApp)
+  const [shared] = useState(boot.shared)
+  const [progress, setProgress] = useState<Progress>(boot.progress)
+  const [screen, setScreen] = useState<Screen>(boot.screen)
+  const [levelId, setLevelId] = useState<LevelId>(boot.levelId)
   const level = levelById(levelId)
   const lp = progress[levelId]
   const round = lp.round
 
   // index of the puzzle on screen (kept separately so a solved puzzle stays visible)
-  const [viewIndex, setViewIndex] = useState(0)
+  const [viewIndex, setViewIndex] = useState(boot.viewIndex)
   // the round on screen (kept after the last solve, when progress.round is already cleared)
-  const [active, setActive] = useState({ number: 0, seed: 0 })
+  const [active, setActive] = useState(boot.active)
   const roundNumber = active.number
   const roundSeed = active.seed
   const puzzle = useMemo<Puzzle | null>(() => {
@@ -144,7 +217,7 @@ function App() {
     return roundPuzzle(levelId, roundNumber, roundSeed, Math.min(viewIndex, ROUND_SIZE - 1))
   }, [screen, shared, levelId, roundNumber, roundSeed, viewIndex])
 
-  const [choices, setChoices] = useState<number[]>(() => (shared ? shuffle(shared.puzzle.choices) : []))
+  const [choices, setChoices] = useState<number[]>(() => boot.choices)
   const [selected, setSelected] = useState<number | null>(null)
   const [customValue, setCustomValue] = useState('')
   const [feedback, setFeedback] = useState<FeedbackState>('idle')
@@ -331,7 +404,7 @@ function App() {
 
   if (SIZE_CHECK) {
     return (
-      <div className="in8-app">
+      <div className={appClass()}>
         <header className="in8-header">
           <Brand />
           <h1 className="in8-title">{SIZE_CHECK.title}</h1>
@@ -346,7 +419,7 @@ function App() {
 
   if (screen === 'start') {
     return (
-      <div className="in8-app">
+      <div className={appClass()}>
         <header className="in8-header in8-header-start">
           <Brand />
           <p className="in8-series">Puzzle Series</p>
@@ -389,7 +462,7 @@ function App() {
   if (screen === 'round-complete' && FREE) {
     const last = lp.lastRound ?? { number: 1, firstTry: 0, misses: 0 }
     return (
-      <div className="in8-app">
+      <div className={appClass()}>
         <header className="in8-header in8-header-start">
           <Brand />
           <div className="in8-end-card">
@@ -427,7 +500,7 @@ function App() {
     const levelIndex = levels.findIndex((l) => l.id === levelId)
     const next = levels[levelIndex + 1]
     return (
-      <div className="in8-app">
+      <div className={appClass()}>
         <header className="in8-header in8-header-start">
           <Brand />
           <p className="in8-complete-kicker">Round {last.number} complete</p>
@@ -497,15 +570,21 @@ function App() {
   )
 
   return (
-    <div className="in8-app">
+    <div className={appClass()}>
       <header className="in8-header">
         <div className="in8-topbar">
-          <button type="button" className="in8-back" onClick={goHome} aria-label="Back to levels">
-            {FREE ? '‹ Home' : '‹ Levels'}
-          </button>
+          {FREE ? (
+            <button type="button" className="in8-back" onClick={goHome} aria-label="Back to levels">
+              ‹ Home
+            </button>
+          ) : (
+            <PointsRow points={points} />
+          )}
           {!FREE ? <ShareButton onClick={() => setShareOpen(true)} /> : null}
         </div>
+        {!FREE ? <LevelTabs current={levelId} onPick={openLevel} /> : null}
         <Brand />
+        {FREE ? <PointsRow points={points} /> : null}
         <p className="in8-progress-indicator">{progressLabel}</p>
         <h1 className="in8-title">{displayTitle}</h1>
         <p className="in8-prompt">{puzzle.prompt}</p>
@@ -547,7 +626,14 @@ function App() {
         {feedback === 'correct' ? (
           <div className="in8-progress">
             {isShared ? (
-              <button type="button" className="in8-progress-btn" onClick={goHome}>
+              <button
+                type="button"
+                className="in8-progress-btn"
+                onClick={() => {
+                  clearSeedFromUrl()
+                  openLevel('beginner')
+                }}
+              >
                 Play iNFiN8 Puzzles
               </button>
             ) : (
