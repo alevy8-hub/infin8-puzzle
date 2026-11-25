@@ -271,7 +271,7 @@ function App() {
   const openSong = songOpen ? SONGS.find((s) => s.id === songOpen && unlocks[s.id]) : undefined
   const cardSong = celebrateSong ?? openSong ?? null
   const currentShare = ((): SharePayload | null => {
-    if (FREE || !puzzle) return null
+    if (!puzzle) return null
     if (screen === 'shared') return sharePayload(puzzle.id, null, { puzzle, levelName: level.name })
     if (screen === 'playing') {
       return sharePayload(puzzle.id, puzzleOrdinal(roundNumber, viewIndex), { puzzle, levelName: level.name })
@@ -279,7 +279,7 @@ function App() {
     return null
   })()
   const roundShare = ((): SharePayload | null => {
-    if (FREE || screen !== 'round-complete' || active.number === 0) return null
+    if (screen !== 'round-complete' || active.number === 0) return null
     const lastPuzzle = roundPuzzle(levelId, active.number, active.seed, ROUND_SIZE - 1)
     return sharePayload(lastPuzzle.id, puzzleOrdinal(active.number, ROUND_SIZE - 1), {
       puzzle: lastPuzzle,
@@ -287,7 +287,7 @@ function App() {
     })
   })()
   const share = currentShare ?? roundShare
-  const shareUi = !FREE && shareOpen && share ? <SharePanel payload={share} onClose={() => setShareOpen(false)} /> : null
+  const shareUi = shareOpen && share ? <SharePanel payload={share} onClose={() => setShareOpen(false)} /> : null
 
   const songCard = cardSong ? (
     <SongCard
@@ -479,6 +479,7 @@ function App() {
               <a className="in8-submit in8-share" href={SUBSCRIBE_URL} target="_blank" rel="noopener noreferrer">
                 Subscribe for $5/mo
               </a>
+              <ShareButton className="in8-progress-btn" onClick={() => setShareOpen(true)} />
               <button type="button" className="in8-progress-btn" onClick={() => openLevel('beginner')}>
                 Play the free 8 again
               </button>
@@ -580,7 +581,7 @@ function App() {
           ) : (
             <PointsRow points={points} />
           )}
-          {!FREE ? <ShareButton onClick={() => setShareOpen(true)} /> : null}
+          <ShareButton onClick={() => setShareOpen(true)} />
         </div>
         {!FREE ? <LevelTabs current={levelId} onPick={openLevel} /> : null}
         <Brand />
@@ -641,7 +642,7 @@ function App() {
                 <button type="button" className="in8-progress-btn" onClick={handleNext}>
                   {isLast ? 'Finish round' : 'Next puzzle'}
                 </button>
-                {!FREE ? <ShareButton className="in8-progress-btn" onClick={() => setShareOpen(true)} /> : null}
+                <ShareButton className="in8-progress-btn" onClick={() => setShareOpen(true)} />
               </>
             )}
           </div>
