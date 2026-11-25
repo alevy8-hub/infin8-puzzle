@@ -7,14 +7,14 @@ import { roundPuzzle } from '../src/data/levels'
 import { beginnerPuzzles } from '../src/data/puzzles'
 import { puzzleSeed } from '../src/data/random'
 import {
+  hookForSeed,
   intentUrls,
   puzzleOrdinal,
-  SHARE_HOOK,
+  SHARE_HOOKS,
   SHARE_PAGE,
   shareLinkDisplay,
   sharePayload,
   sharePost,
-  shareText,
   shareUrl,
   SITE_URL,
 } from '../src/data/share'
@@ -36,20 +36,27 @@ const puzzleFromSeed = (code: string) => {
 
 console.log('copy')
 {
-  const t = shareText(9)
-  check('hook is the exact line DJ picked', t === 'Most people get this wrong on the first try.', t)
-  check('same hook for a shared-view puzzle (no number, no emoji)', shareText(null) === SHARE_HOOK)
-  check('hook has no puzzle number, emoji, or extra lines', !/[0-9∞🧩🧠\n]/.test(t) && t === SHARE_HOOK, t)
+  const expected = (hook: string) =>
+    `${hook} 🧩\n\nNo calculator. No cheating. 60 seconds.\nSharpens focus, trains your brain, wakes up your math.\n\nNothing to lose. Everything to gain.\n${SHARE_PAGE}`
+
+  check('three exact hooks', SHARE_HOOKS.length === 3 && SHARE_HOOKS[0] === 'Most people get this wrong on the first try.' && SHARE_HOOKS[1] === "Looks easy. It's not." && SHARE_HOOKS[2] === 'Only a few get this on the first try.')
+  check('same seed always gets the same hook', hookForSeed('001') === hookForSeed('001') && hookForSeed('I-482913') === hookForSeed('I-482913'))
+  const freeHooks = new Set(beginnerPuzzles.map((p) => hookForSeed(p.id)))
+  check('the free 8 are not all the same hook', freeHooks.size > 1, [...freeHooks].join(' | '))
+
   const url = shareUrl('001')
-  const bare = shareLinkDisplay(url)
-  const post = sharePost(url)
-  check('display link is exactly djalevy8.com/free', bare === 'djalevy8.com/free', bare)
-  check('same constant for subscriber and free builds', bare === SHARE_PAGE)
-  check('display link has no scheme and no seed', bare === SHARE_PAGE && !/^https?:\/\//i.test(bare) && !bare.includes('seed='), bare)
-  check('post is hook, blank line, then djalevy8.com/free', post === `${SHARE_HOOK}\n\n${SHARE_PAGE}`, JSON.stringify(post))
-  check('post starts with the hook, not the URL', post.startsWith(SHARE_HOOK) && !post.startsWith('http'))
-  check('link is on its own line after a blank line', post.split('\n\n')[1] === SHARE_PAGE)
-  check('copied post has no https:// and no github.io', !post.includes('https://') && !post.includes('github.io'))
+  const hook = hookForSeed('001')
+  const post = sharePost(url, hook)
+  check('display link is exactly djalevy8.com/free', shareLinkDisplay(url) === SHARE_PAGE)
+  check('post matches DJ\'s layout exactly', post === expected(hook), JSON.stringify(post))
+  check('post starts with the hook and a puzzle emoji, then a blank line', post.startsWith(`${hook} 🧩\n\n`))
+  check('link is the last line, no https:// or github.io', post.endsWith(`\n${SHARE_PAGE}`) && !post.includes('https://') && !post.includes('github.io'))
+
+  for (const h of SHARE_HOOKS) {
+    const variant = expected(h)
+    const weighted = variant.length - SHARE_PAGE.length + 23
+    check(`under 280 chars (${h.slice(0, 18)}…)`, variant.length <= 280 && weighted <= 280, `len=${variant.length} x=${weighted}`)
+  }
 }
 
 console.log('links')
@@ -67,7 +74,7 @@ console.log('links')
   const p = sharePayload('I-482913', 9)
   const intents = intentUrls(p.text, p.url)
   const encodedPost = encodeURIComponent(sharePost(p.url, p.text))
-  check('payload text is the hook only', p.text === SHARE_HOOK, p.text)
+  check('payload text is the hook for this seed', p.text === hookForSeed(p.seed), p.text)
   check('X intent', intents.x === `https://x.com/intent/post?text=${encodedPost}`, intents.x)
   check(
     'Facebook intent stays URL-only',
@@ -84,11 +91,12 @@ console.log('links')
   )
   const xText = decodeURIComponent(new URL(intents.x).searchParams.get('text') || '')
   check(
-    'decoded X text is hook, blank line, djalevy8.com/free',
-    xText === `${SHARE_HOOK}\n\n${SHARE_PAGE}`,
+    'decoded X text is the full post for this seed',
+    xText === sharePost(p.url, p.text),
     JSON.stringify(xText),
   )
   check('decoded X text has no https:// and no github.io', !xText.includes('https://') && !xText.includes('github.io'))
+  check('decoded X text is under 280 characters', xText.length <= 280, String(xText.length))
 }
 
 console.log('?seed= round-trip')

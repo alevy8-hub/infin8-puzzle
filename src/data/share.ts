@@ -27,23 +27,33 @@ export function shareLabel(ordinal: number | null): string {
   return ordinal === null ? 'iNFiN8 Puzzle ∞' : `iNFiN8 Puzzle ${ordinal}/∞`
 }
 
-/** The only line that precedes the share link. No puzzle number, no emoji, no extra lines. */
-export const SHARE_HOOK = 'Most people get this wrong on the first try.'
-
-export function shareText(_ordinal: number | null = null): string {
-  return SHARE_HOOK
-}
-
 /** Public site path shown in every share post. No https://, no seed. */
 export const SHARE_PAGE = 'djalevy8.com/free'
+
+/** Rotating first lines. The same puzzle seed always gets the same hook. */
+export const SHARE_HOOKS = [
+  'Most people get this wrong on the first try.',
+  "Looks easy. It's not.",
+  'Only a few get this on the first try.',
+] as const
+
+/** FNV-1a, stable across sessions and builds. */
+export function hookForSeed(seed: string): string {
+  let hash = 2166136261
+  for (let i = 0; i < seed.length; i += 1) {
+    hash ^= seed.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
+  }
+  return SHARE_HOOKS[(hash >>> 0) % SHARE_HOOKS.length]
+}
 
 export function shareLinkDisplay(_url?: string): string {
   return SHARE_PAGE
 }
 
-/** Hook, a blank line, then djalevy8.com/free — used for copy, native share, and intent text. */
-export function sharePost(_url?: string, hook = SHARE_HOOK): string {
-  return `${hook}\n\n${SHARE_PAGE}`
+/** Full post for the native sheet, Copy link, and the panel preview. Line breaks are exact. */
+export function sharePost(_url?: string, hook: string = SHARE_HOOKS[0]): string {
+  return `${hook} 🧩\n\nNo calculator. No cheating. 60 seconds.\nSharpens focus, trains your brain, wakes up your math.\n\nNothing to lose. Everything to gain.\n${SHARE_PAGE}`
 }
 
 export function shareUrl(seed: string, site = SITE_URL): string {
@@ -59,7 +69,7 @@ export function sharePayload(
   const site = opts?.site ?? SITE_URL
   return {
     label: shareLabel(ordinal),
-    text: shareText(ordinal),
+    text: hookForSeed(seed),
     url: shareUrl(seed, site),
     seed,
     puzzle: opts?.puzzle,

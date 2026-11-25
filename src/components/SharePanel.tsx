@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { canNativeShare, canShareFiles, copyText, intentUrls, shareLinkDisplay, sharePost, type SharePayload } from '../data/share'
+import { canNativeShare, canShareFiles, copyText, intentUrls, SHARE_PAGE, sharePost, type SharePayload } from '../data/share'
 import { renderPuzzleShareImage, shareImageFile } from '../data/shareImage'
 import './SharePanel.css'
 
@@ -177,8 +177,8 @@ export function SharePanel({ payload, onClose }: Props) {
           <p className="in8-share-art-status">Making the puzzle image…</p>
         ) : null}
         <p className="in8-share-preview">
-          {payload.text}
-          <span className="in8-share-preview-link">{shareLinkDisplay(payload.url)}</span>
+          {post.slice(0, post.lastIndexOf(SHARE_PAGE))}
+          <span className="in8-share-preview-link">{SHARE_PAGE}</span>
         </p>
         <div className="in8-share-actions">
           {native ? (
