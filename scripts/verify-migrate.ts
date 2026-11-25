@@ -4,6 +4,7 @@
  * Run: npx tsx scripts/verify-migrate.ts
  */
 import { emptyImport, importFreePoints, importFreeProgress, mergeLevelProgress } from '../src/data/migrate'
+import { isLevelOpen } from '../src/data/unlock'
 import { emptyProgress, type LevelProgress } from '../src/data/progress'
 import type { PointsState } from '../src/data/points'
 
@@ -80,6 +81,12 @@ console.log('importFreeProgress')
   free.beginner = midFree(2)
   const merged = mergeLevelProgress(sub.beginner, free.beginner)
   check("does not overwrite a subscriber's later Beginner round", merged === sub.beginner && merged.round?.number === 2 && merged.round.index === 3)
+}
+
+console.log('isLevelOpen')
+{
+  check('subscriber: Beginner, Intermediate and Advanced are all open', isLevelOpen(false, 0) && isLevelOpen(false, 1) && isLevelOpen(false, 2))
+  check('free: only Beginner is open', isLevelOpen(true, 0) && !isLevelOpen(true, 1) && !isLevelOpen(true, 2))
 }
 
 if (failed) {

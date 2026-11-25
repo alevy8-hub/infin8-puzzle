@@ -10,6 +10,7 @@ import { beginnerPuzzles, type Puzzle } from './data/puzzles'
 import { row } from './data/build'
 import { randomRoundSeed } from './data/random'
 import { DEMO_SONG_INDEX, DEMO_UNLOCK, FREE, SUBSCRIBE_URL } from './data/mode'
+import { isLevelOpen } from './data/unlock'
 import { loadUnlocks, saveUnlocks, SONG_1, SONGS, withEarnedUnlocks, type Unlocks } from './data/songs'
 import { SongCard, SongProgress } from './components/SongUnlock'
 import './App.css'
@@ -71,9 +72,8 @@ function clearSeedFromUrl() {
   window.history.replaceState(null, '', url.toString())
 }
 
-function isUnlocked(progress: Progress, index: number): boolean {
-  if (FREE) return index === 0
-  return index === 0 || progress[levels[index - 1].id].roundsCleared > 0
+function isUnlocked(index: number): boolean {
+  return isLevelOpen(FREE, index)
 }
 
 function freeStatus(p: LevelProgress, unlocked: boolean): string {
@@ -335,7 +335,7 @@ function App() {
           <ul className="in8-sections">
             {levels.map((l, i) => {
               const p = progress[l.id]
-              const unlocked = isUnlocked(progress, i)
+              const unlocked = isUnlocked(i)
               return (
                 <li key={l.id}>
                   <button
