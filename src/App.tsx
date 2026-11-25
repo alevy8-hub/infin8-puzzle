@@ -11,13 +11,13 @@ import { row } from './data/build'
 import { randomRoundSeed } from './data/random'
 import { DEMO_SONG_INDEX, DEMO_UNLOCK, FREE, SUBSCRIBE_URL } from './data/mode'
 import { isLevelOpen } from './data/unlock'
+import { puzzleOrdinal, sharePayload, type SharePayload } from './data/share'
 import { loadUnlocks, saveUnlocks, SONG_1, SONGS, withEarnedUnlocks, type Unlocks } from './data/songs'
 import { SongCard, SongProgress } from './components/SongUnlock'
+import { ShareButton, SharePanel } from './components/SharePanel'
 import './App.css'
 
 type Screen = 'start' | 'playing' | 'round-complete' | 'shared'
-
-const SITE_URL = 'https://alevy8-hub.github.io/infin8-puzzle/'
 
 function shuffle<T>(items: T[]): T[] {
   const next = [...items]
@@ -163,6 +163,7 @@ function App() {
   })
   // id of the song opened from "My songs" (replay)
   const [songOpen, setSongOpen] = useState<string | null>(null)
+  const [shareOpen, setShareOpen] = useState(false)
   // newly earned songs celebrate one at a time, in unlock order
   const celebrateSong = SONGS.find((s) => unlocks[s.id] && !unlocks[s.id].seen) ?? null
 
@@ -196,6 +197,20 @@ function App() {
 
   const openSong = songOpen ? SONGS.find((s) => s.id === songOpen && unlocks[s.id]) : undefined
   const cardSong = celebrateSong ?? openSong ?? null
+  const currentShare = ((): SharePayload | null => {
+    if (FREE || !puzzle) return null
+    if (screen === 'shared') return sharePayload(puzzle.id, null)
+    if (screen === 'playing') return sharePayload(puzzle.id, puzzleOrdinal(roundNumber, viewIndex))
+    return null
+  })()
+  const roundShare = ((): SharePayload | null => {
+    if (FREE || screen !== 'round-complete' || active.number === 0) return null
+    const lastPuzzle = roundPuzzle(levelId, active.number, active.seed, ROUND_SIZE - 1)
+    return sharePayload(lastPuzzle.id, puzzleOrdinal(active.number, ROUND_SIZE - 1))
+  })()
+  const share = currentShare ?? roundShare
+  const shareUi = !FREE && shareOpen && share ? <SharePanel payload={share} onClose={() => setShareOpen(false)} /> : null
+
   const songCard = cardSong ? (
     <SongCard
       key={cardSong.id}
@@ -303,6 +318,7 @@ function App() {
 
   const goHome = () => {
     if (screen === 'shared') clearSeedFromUrl()
+    setShareOpen(false)
     setScreen('start')
     setFeedback('idle')
     window.scrollTo(0, 0)
@@ -360,6 +376,7 @@ function App() {
         </header>
         <Footer />
         {songCard}
+      {shareUi}
       </div>
     )
   }
@@ -395,6 +412,7 @@ function App() {
         </header>
         <Footer />
         {songCard}
+      {shareUi}
       </div>
     )
   }
@@ -403,8 +421,6 @@ function App() {
     const last = lp.lastRound ?? { number: lp.roundsCleared, firstTry: 0, misses: 0 }
     const levelIndex = levels.findIndex((l) => l.id === levelId)
     const next = levels[levelIndex + 1]
-    const shareText = `I cleared iNFiN8 Puzzles: ${level.name} · Round ${last.number} · ${last.firstTry}/${ROUND_SIZE} first try. Can you? ${SITE_URL}`
-    const shareUrl = `https://x.com/intent/post?text=${encodeURIComponent(shareText)}`
     return (
       <div className="in8-app">
         <header className="in8-header in8-header-start">
@@ -433,9 +449,9 @@ function App() {
           </p>
           {songRow}
           <div className="in8-complete-actions">
-            <a className="in8-submit in8-share" href={shareUrl} target="_blank" rel="noopener noreferrer">
-              Share on 𝕏
-            </a>
+            <button type="button" className="in8-progress-btn" onClick={() => setShareOpen(true)}>
+              Share
+            </button>
             <button type="button" className="in8-progress-btn" onClick={() => openLevel(levelId)}>
               Next round
             </button>
@@ -451,6 +467,7 @@ function App() {
         </header>
         <Footer />
         {songCard}
+      {shareUi}
       </div>
     )
   }
@@ -481,6 +498,7 @@ function App() {
           <button type="button" className="in8-back" onClick={goHome} aria-label="Back to levels">
             {FREE ? '‹ Home' : '‹ Levels'}
           </button>
+          {!FREE ? <ShareButton onClick={() => setShareOpen(true)} /> : null}
         </div>
         <Brand />
         <p className="in8-progress-indicator">{progressLabel}</p>
@@ -528,9 +546,12 @@ function App() {
                 Play iNFiN8 Puzzles
               </button>
             ) : (
-              <button type="button" className="in8-progress-btn" onClick={handleNext}>
-                {isLast ? 'Finish round' : 'Next puzzle'}
-              </button>
+              <>
+                <button type="button" className="in8-progress-btn" onClick={handleNext}>
+                  {isLast ? 'Finish round' : 'Next puzzle'}
+                </button>
+                {!FREE ? <ShareButton className="in8-progress-btn" onClick={() => setShareOpen(true)} /> : null}
+              </>
             )}
           </div>
         ) : null}
@@ -538,6 +559,7 @@ function App() {
 
       <Footer />
       {songCard}
+      {shareUi}
     </div>
   )
 }
