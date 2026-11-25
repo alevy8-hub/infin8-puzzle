@@ -34,14 +34,16 @@ export function shareText(_ordinal: number | null = null): string {
   return SHARE_HOOK
 }
 
-/** Visible share link: no https://, so the post doesn't start with a scheme. */
-export function shareLinkDisplay(url: string): string {
-  return url.replace(/^https:\/\//i, '')
+/** Public site path shown in every share post. No https://, no seed. */
+export const SHARE_PAGE = 'djalevy8.com/free'
+
+export function shareLinkDisplay(_url?: string): string {
+  return SHARE_PAGE
 }
 
-/** Hook, a blank line, then the bare link — used for copy, native share, and intent text. */
-export function sharePost(url: string, hook = SHARE_HOOK): string {
-  return `${hook}\n\n${shareLinkDisplay(url)}`
+/** Hook, a blank line, then djalevy8.com/free — used for copy, native share, and intent text. */
+export function sharePost(_url?: string, hook = SHARE_HOOK): string {
+  return `${hook}\n\n${SHARE_PAGE}`
 }
 
 export function shareUrl(seed: string, site = SITE_URL): string {

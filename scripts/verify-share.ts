@@ -10,6 +10,7 @@ import {
   intentUrls,
   puzzleOrdinal,
   SHARE_HOOK,
+  SHARE_PAGE,
   shareLinkDisplay,
   sharePayload,
   sharePost,
@@ -42,12 +43,13 @@ console.log('copy')
   const url = shareUrl('001')
   const bare = shareLinkDisplay(url)
   const post = sharePost(url)
-  check('display link drops https://', bare === 'alevy8-hub.github.io/infin8-puzzle/?seed=001', bare)
-  check('display link does not include a scheme', !/^https?:\/\//i.test(bare), bare)
-  check('post is hook, blank line, then the bare link', post === `${SHARE_HOOK}\n\n${bare}`, JSON.stringify(post))
+  check('display link is exactly djalevy8.com/free', bare === 'djalevy8.com/free', bare)
+  check('same constant for subscriber and free builds', bare === SHARE_PAGE)
+  check('display link has no scheme and no seed', bare === SHARE_PAGE && !/^https?:\/\//i.test(bare) && !bare.includes('seed='), bare)
+  check('post is hook, blank line, then djalevy8.com/free', post === `${SHARE_HOOK}\n\n${SHARE_PAGE}`, JSON.stringify(post))
   check('post starts with the hook, not the URL', post.startsWith(SHARE_HOOK) && !post.startsWith('http'))
-  check('link is on its own line after a blank line', post.split('\n\n')[1] === bare)
-  check('copied post has no https://', !post.includes('https://'))
+  check('link is on its own line after a blank line', post.split('\n\n')[1] === SHARE_PAGE)
+  check('copied post has no https:// and no github.io', !post.includes('https://') && !post.includes('github.io'))
 }
 
 console.log('links')
@@ -82,11 +84,11 @@ console.log('links')
   )
   const xText = decodeURIComponent(new URL(intents.x).searchParams.get('text') || '')
   check(
-    'decoded X text is hook, blank line, bare link',
-    xText === `${SHARE_HOOK}\n\n${shareLinkDisplay(p.url)}`,
+    'decoded X text is hook, blank line, djalevy8.com/free',
+    xText === `${SHARE_HOOK}\n\n${SHARE_PAGE}`,
     JSON.stringify(xText),
   )
-  check('decoded X text has no https://', !xText.includes('https://'))
+  check('decoded X text has no https:// and no github.io', !xText.includes('https://') && !xText.includes('github.io'))
 }
 
 console.log('?seed= round-trip')
