@@ -1,5 +1,6 @@
 import type { LevelId } from './levels'
-import { DEMO_UNLOCK, storageKey } from './mode'
+import { DEMO_UNLOCK, FREE, freeStorageKey, storageKey } from './mode'
+import { importFreeProgress } from './migrate'
 
 export type RoundState = {
   number: number
@@ -35,30 +36,48 @@ export const emptyProgress = (): Progress => ({
   advanced: fresh(),
 })
 
-export function loadProgress(): Progress {
+function readProgress(storage: string): Progress | null {
+  const raw = localStorage.getItem(storage)
+  if (!raw) return null
+  const parsed = JSON.parse(raw) as Partial<Progress>
   const base = emptyProgress()
+  for (const id of Object.keys(base) as LevelId[]) {
+    const p = parsed[id]
+    if (p && typeof p === 'object') base[id] = { ...base[id], ...p }
+  }
+  return base
+}
+
+function readLegacyProgress(): Progress {
+  const base = emptyProgress()
+  const old = localStorage.getItem(OLD_KEY)
+  if (old) {
+    const parsed = JSON.parse(old) as Record<string, { cleared?: boolean }>
+    for (const id of Object.keys(base) as LevelId[]) {
+      if (parsed[id]?.cleared) base[id].roundsCleared = 1
+    }
+  }
+  return base
+}
+
+export function loadProgress(): Progress {
+  let base = emptyProgress()
   try {
-    const raw = localStorage.getItem(KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw) as Partial<Progress>
-      for (const id of Object.keys(base) as LevelId[]) {
-        const p = parsed[id]
-        if (p && typeof p === 'object') base[id] = { ...base[id], ...p }
-      }
-      return base
-    }
-    // carry over unlocks from the earlier 3-section preview
-    const old = localStorage.getItem(OLD_KEY)
-    if (old) {
-      const parsed = JSON.parse(old) as Record<string, { cleared?: boolean }>
-      for (const id of Object.keys(base) as LevelId[]) {
-        if (parsed[id]?.cleared) base[id].roundsCleared = 1
-      }
-    }
+    base = readProgress(KEY) ?? readLegacyProgress()
   } catch {
     /* storage unavailable or corrupt: start fresh */
   }
-  return base
+  if (FREE || DEMO_UNLOCK) return base
+  try {
+    const free = readProgress(freeStorageKey('infin8-puzzle-progress-v2'))
+    if (!free) return base
+    const { next, changed } = importFreeProgress(base, free)
+    if (!changed) return base
+    saveProgress(next)
+    return next
+  } catch {
+    return base
+  }
 }
 
 export function saveProgress(p: Progress): void {

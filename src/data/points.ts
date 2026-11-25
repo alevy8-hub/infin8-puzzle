@@ -1,5 +1,6 @@
 import type { LevelId } from './levels'
-import { DEMO_UNLOCK, storageKey } from './mode'
+import { DEMO_UNLOCK, FREE, freeStorageKey, storageKey } from './mode'
+import { FREE_IMPORT_KEY, importFreePoints, parseImport } from './migrate'
 
 /** Base points per solve. */
 export const BASE_POINTS: Record<LevelId, number> = { beginner: 10, intermediate: 20, advanced: 40 }
@@ -47,10 +48,10 @@ function yesterdayKey(now: Date): string {
   return dayKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))
 }
 
-export function loadPoints(): PointsState {
+function readPoints(storage: string): PointsState {
   const base = fresh()
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(storage)
     if (!raw) return base
     const p = JSON.parse(raw) as Partial<PointsState> | null
     if (!p || typeof p !== 'object') return base
@@ -62,6 +63,22 @@ export function loadPoints(): PointsState {
     /* storage unavailable or corrupt: start fresh */
   }
   return base
+}
+
+export function loadPoints(): PointsState {
+  const base = readPoints(KEY)
+  if (FREE || DEMO_UNLOCK) return base
+  try {
+    const free = readPoints(freeStorageKey('infin8-puzzle-points-v1'))
+    const imported = parseImport(localStorage.getItem(FREE_IMPORT_KEY))
+    const { next, imported: nextImported, changed } = importFreePoints(base, free, imported)
+    if (!changed) return base
+    savePoints(next)
+    localStorage.setItem(FREE_IMPORT_KEY, JSON.stringify(nextImported))
+    return next
+  } catch {
+    return base
+  }
 }
 
 export function savePoints(p: PointsState): void {

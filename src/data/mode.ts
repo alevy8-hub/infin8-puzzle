@@ -6,8 +6,13 @@ export const FREE: boolean = import.meta.env?.VITE_FREE === '1'
 
 export const SUBSCRIBE_URL = 'https://x.com/DJAlevy8/creator-subscriptions/subscribe'
 
-/** Free build keeps its own saves so it never touches subscriber progress or points on the same origin. */
-export const storageKey = (key: string): string => (FREE ? key.replace('infin8-puzzle-', 'infin8-puzzle-free-') : key)
+/**
+ * Free build writes to its own keys so it never overwrites subscriber later-round progress
+ * on the same origin (alevy8-hub.github.io). The subscriber build imports those free saves
+ * (see migrate.ts) so points and the original-8 Beginner run carry over after someone subscribes.
+ */
+export const freeStorageKey = (key: string): string => key.replace('infin8-puzzle-', 'infin8-puzzle-free-')
+export const storageKey = (key: string): string => (FREE ? freeStorageKey(key) : key)
 
 /**
  * Test link `?demo=unlock` (subscriber build): shows the song unlock card at once, purely in memory.
