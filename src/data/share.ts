@@ -1,5 +1,12 @@
-/** Public subscriber game. Shared links always point here so they work after a preview. */
-export const SITE_URL = 'https://alevy8-hub.github.io/infin8-puzzle/'
+/**
+ * Public URL for shared puzzle links.
+ * Override with VITE_SHARE_ORIGIN when building a preview (so the card meta is on the same path).
+ * Live builds leave this unset and share the subscriber root.
+ */
+const SHARE_ORIGIN =
+  (import.meta.env && (import.meta.env.VITE_SHARE_ORIGIN as string | undefined)) ||
+  'https://alevy8-hub.github.io/infin8-puzzle/'
+export const SITE_URL = SHARE_ORIGIN.endsWith('/') ? SHARE_ORIGIN : `${SHARE_ORIGIN}/`
 
 export type SharePayload = {
   /** Short in-game name, e.g. iNFiN8 Puzzle 9/∞ */

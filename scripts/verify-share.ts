@@ -43,6 +43,12 @@ console.log('links')
   check('seed link is on the live subscriber origin', url === `${SITE_URL}?seed=I-482913`, url)
   const frozen = shareUrl('001')
   check('frozen Beginner uses ?seed=001', frozen === `${SITE_URL}?seed=001`)
+  const preview = shareUrl('001', 'https://alevy8-hub.github.io/infin8-puzzle/preview-share/')
+  check(
+    'preview origin can be passed for card testing',
+    preview === 'https://alevy8-hub.github.io/infin8-puzzle/preview-share/?seed=001',
+    preview,
+  )
   const p = sharePayload('I-482913', 9)
   const intents = intentUrls(p.text, p.url)
   const encodedText = encodeURIComponent(`${p.text} ${p.url}`)
