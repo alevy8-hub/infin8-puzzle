@@ -3,6 +3,8 @@
  * Override with VITE_SHARE_ORIGIN when building a preview (so the card meta is on the same path).
  * Live builds leave this unset and share the subscriber root.
  */
+import type { Puzzle } from './puzzles'
+
 const SHARE_ORIGIN =
   (import.meta.env && (import.meta.env.VITE_SHARE_ORIGIN as string | undefined)) ||
   'https://alevy8-hub.github.io/infin8-puzzle/'
@@ -14,6 +16,8 @@ export type SharePayload = {
   text: string
   url: string
   seed: string
+  puzzle?: Puzzle
+  levelName?: string
 }
 
 export const puzzleOrdinal = (roundNumber: number, index: number, roundSize = 8): number =>
@@ -32,8 +36,20 @@ export function shareUrl(seed: string, site = SITE_URL): string {
   return `${base}?seed=${encodeURIComponent(seed)}`
 }
 
-export function sharePayload(seed: string, ordinal: number | null, site = SITE_URL): SharePayload {
-  return { label: shareLabel(ordinal), text: shareText(ordinal), url: shareUrl(seed, site), seed }
+export function sharePayload(
+  seed: string,
+  ordinal: number | null,
+  opts?: { site?: string; puzzle?: Puzzle; levelName?: string },
+): SharePayload {
+  const site = opts?.site ?? SITE_URL
+  return {
+    label: shareLabel(ordinal),
+    text: shareText(ordinal),
+    url: shareUrl(seed, site),
+    seed,
+    puzzle: opts?.puzzle,
+    levelName: opts?.levelName,
+  }
 }
 
 export type IntentName = 'x' | 'facebook' | 'threads' | 'whatsapp' | 'reddit'
@@ -51,6 +67,20 @@ export function intentUrls(text: string, url: string): Record<IntentName, string
 
 export function canNativeShare(): boolean {
   return typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+}
+
+/** True when this browser can attach files to the native share sheet (iPhone Safari 15+ top-level). */
+export function canShareFiles(files?: File[]): boolean {
+  if (!canNativeShare() || typeof navigator.canShare !== 'function') return false
+  try {
+    const list =
+      files && files.length
+        ? files
+        : [new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], 'infin8-puzzle.png', { type: 'image/png' })]
+    return navigator.canShare({ files: list })
+  } catch {
+    return false
+  }
 }
 
 /** Copy text. Tries the clipboard API, then a hidden textarea (better in some iframes). */

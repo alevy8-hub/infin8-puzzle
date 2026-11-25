@@ -20,7 +20,7 @@ export type SymbolId =
   | 'celtic-cross'
   | 'infin8-symbol'
 
-const base = import.meta.env.BASE_URL
+const base = (import.meta.env && import.meta.env.BASE_URL) || '/'
 
 export const SYMBOL_ASSETS: Record<SymbolId, string> = {
   infinity: `${base}assets/symbols/infinity.png`,

@@ -199,14 +199,19 @@ function App() {
   const cardSong = celebrateSong ?? openSong ?? null
   const currentShare = ((): SharePayload | null => {
     if (FREE || !puzzle) return null
-    if (screen === 'shared') return sharePayload(puzzle.id, null)
-    if (screen === 'playing') return sharePayload(puzzle.id, puzzleOrdinal(roundNumber, viewIndex))
+    if (screen === 'shared') return sharePayload(puzzle.id, null, { puzzle, levelName: level.name })
+    if (screen === 'playing') {
+      return sharePayload(puzzle.id, puzzleOrdinal(roundNumber, viewIndex), { puzzle, levelName: level.name })
+    }
     return null
   })()
   const roundShare = ((): SharePayload | null => {
     if (FREE || screen !== 'round-complete' || active.number === 0) return null
     const lastPuzzle = roundPuzzle(levelId, active.number, active.seed, ROUND_SIZE - 1)
-    return sharePayload(lastPuzzle.id, puzzleOrdinal(active.number, ROUND_SIZE - 1))
+    return sharePayload(lastPuzzle.id, puzzleOrdinal(active.number, ROUND_SIZE - 1), {
+      puzzle: lastPuzzle,
+      levelName: level.name,
+    })
   })()
   const share = currentShare ?? roundShare
   const shareUi = !FREE && shareOpen && share ? <SharePanel payload={share} onClose={() => setShareOpen(false)} /> : null

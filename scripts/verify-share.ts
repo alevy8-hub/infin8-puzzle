@@ -14,6 +14,7 @@ import {
   shareUrl,
   SITE_URL,
 } from '../src/data/share'
+import { SHARE_LINK_TEXT, shareFinalRow } from '../src/data/shareImage'
 
 let failed = 0
 const check = (name: string, cond: boolean, detail = '') => {
@@ -99,6 +100,25 @@ console.log('?seed= round-trip')
   check('round puzzle seed reopens the same board', !!reopened && reopened.puzzle.correctAnswer === inRound.correctAnswer)
   check('ordinal for round 2, index 0 is 9', puzzleOrdinal(2, 0) === 9)
   check('ordinal for round 1, last puzzle is 8', puzzleOrdinal(1, 7) === 8)
+}
+
+console.log('share image data')
+{
+  check('short link text has no scheme', SHARE_LINK_TEXT === 'alevy8-hub.github.io/infin8-puzzle')
+  const puz = generatePuzzle('beginner', 322048)
+  const final = shareFinalRow(puz.finalRow)
+  const last = final.tokens[final.tokens.length - 1]
+  const eq = final.tokens[final.tokens.length - 2]
+  check('final row ends with unknown', last?.type === 'unknown')
+  check('equals sits before the question mark', eq?.type === 'op' && eq.value === '=')
+  check(
+    'final share row never includes a trailing answer',
+    !final.tokens.some((t) => t.type === 'number' && t.value === puz.correctAnswer),
+  )
+  check(
+    'share final row ignores choices and the answer field',
+    !final.tokens.some((t) => t.type === 'number') || puz.choices.every((c) => !final.tokens.some((t) => t.type === 'number' && t.value === c)),
+  )
 }
 
 if (failed) {
