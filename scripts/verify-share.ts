@@ -10,8 +10,10 @@ import {
   hookForSeed,
   intentUrls,
   puzzleOrdinal,
+  reasonForSeed,
   SHARE_HOOKS,
   SHARE_PAGE,
+  SHARE_REASONS,
   shareLinkDisplay,
   sharePayload,
   sharePost,
@@ -36,26 +38,35 @@ const puzzleFromSeed = (code: string) => {
 
 console.log('copy')
 {
-  const expected = (hook: string) =>
-    `${hook} 🧩\n\nNo calculator. No cheating. 60 seconds.\nSharpens focus, trains your brain, wakes up your math.\n\nNothing to lose. Everything to gain.\n${SHARE_PAGE}`
+  const expected = (hook: string, reason: string) =>
+    `${hook} 🧩\n\n${reason}\n\nNothing to lose. Everything to gain.\n${SHARE_PAGE}`
 
   check('three exact hooks', SHARE_HOOKS.length === 3 && SHARE_HOOKS[0] === 'Most people get this wrong on the first try.' && SHARE_HOOKS[1] === "Looks easy. It's not." && SHARE_HOOKS[2] === 'Only a few get this on the first try.')
-  check('same seed always gets the same hook', hookForSeed('001') === hookForSeed('001') && hookForSeed('I-482913') === hookForSeed('I-482913'))
+  check('three exact reasons', SHARE_REASONS.length === 3 && SHARE_REASONS[0] === 'No calculator. Just your brain.' && SHARE_REASONS[1] === 'Sharpens your focus in 60 seconds.' && SHARE_REASONS[2] === 'Quick brain training. No cheating.')
+  check('same seed always gets the same hook and reason', hookForSeed('001') === hookForSeed('001') && reasonForSeed('001') === reasonForSeed('001') && hookForSeed('I-482913') === hookForSeed('I-482913') && reasonForSeed('I-482913') === reasonForSeed('I-482913'))
   const freeHooks = new Set(beginnerPuzzles.map((p) => hookForSeed(p.id)))
+  const freeReasons = new Set(beginnerPuzzles.map((p) => reasonForSeed(p.id)))
   check('the free 8 are not all the same hook', freeHooks.size > 1, [...freeHooks].join(' | '))
+  check('the free 8 are not all the same reason', freeReasons.size > 1, [...freeReasons].join(' | '))
+  const paired = beginnerPuzzles.some((p) => SHARE_HOOKS.indexOf(hookForSeed(p.id) as (typeof SHARE_HOOKS)[number]) !== SHARE_REASONS.indexOf(reasonForSeed(p.id) as (typeof SHARE_REASONS)[number]))
+  check('hook and reason are not locked to the same index', paired)
 
   const url = shareUrl('001')
   const hook = hookForSeed('001')
-  const post = sharePost(url, hook)
+  const reason = reasonForSeed('001')
+  const post = sharePost('001')
   check('display link is exactly djalevy8.com/free', shareLinkDisplay(url) === SHARE_PAGE)
-  check('post matches DJ\'s layout exactly', post === expected(hook), JSON.stringify(post))
+  check("post matches DJ's layout exactly", post === expected(hook, reason), JSON.stringify(post))
+  check('post has one reason line, not two body lines', (post.match(/\n\n/g) || []).length === 2)
   check('post starts with the hook and a puzzle emoji, then a blank line', post.startsWith(`${hook} 🧩\n\n`))
   check('link is the last line, no https:// or github.io', post.endsWith(`\n${SHARE_PAGE}`) && !post.includes('https://') && !post.includes('github.io'))
 
   for (const h of SHARE_HOOKS) {
-    const variant = expected(h)
-    const weighted = variant.length - SHARE_PAGE.length + 23
-    check(`under 280 chars (${h.slice(0, 18)}…)`, variant.length <= 280 && weighted <= 280, `len=${variant.length} x=${weighted}`)
+    for (const r of SHARE_REASONS) {
+      const variant = expected(h, r)
+      const weighted = variant.length - SHARE_PAGE.length + 23
+      check(`under 280 chars`, variant.length <= 280 && weighted <= 280, `len=${variant.length} x=${weighted}`)
+    }
   }
 }
 
@@ -72,8 +83,8 @@ console.log('links')
     preview,
   )
   const p = sharePayload('I-482913', 9)
-  const intents = intentUrls(p.text, p.url)
-  const encodedPost = encodeURIComponent(sharePost(p.url, p.text))
+  const intents = intentUrls(p.seed, p.url)
+  const encodedPost = encodeURIComponent(sharePost(p.seed))
   check('payload text is the hook for this seed', p.text === hookForSeed(p.seed), p.text)
   check('X intent', intents.x === `https://x.com/intent/post?text=${encodedPost}`, intents.x)
   check(
@@ -92,7 +103,7 @@ console.log('links')
   const xText = decodeURIComponent(new URL(intents.x).searchParams.get('text') || '')
   check(
     'decoded X text is the full post for this seed',
-    xText === sharePost(p.url, p.text),
+    xText === sharePost(p.seed),
     JSON.stringify(xText),
   )
   check('decoded X text has no https:// and no github.io', !xText.includes('https://') && !xText.includes('github.io'))

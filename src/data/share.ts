@@ -37,14 +37,30 @@ export const SHARE_HOOKS = [
   'Only a few get this on the first try.',
 ] as const
 
+/** One reason line, rotated independently of the hook. */
+export const SHARE_REASONS = [
+  'No calculator. Just your brain.',
+  'Sharpens your focus in 60 seconds.',
+  'Quick brain training. No cheating.',
+] as const
+
 /** FNV-1a, stable across sessions and builds. */
-export function hookForSeed(seed: string): string {
+function fnv1a(value: string): number {
   let hash = 2166136261
-  for (let i = 0; i < seed.length; i += 1) {
-    hash ^= seed.charCodeAt(i)
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i)
     hash = Math.imul(hash, 16777619)
   }
-  return SHARE_HOOKS[(hash >>> 0) % SHARE_HOOKS.length]
+  return hash >>> 0
+}
+
+export function hookForSeed(seed: string): string {
+  return SHARE_HOOKS[fnv1a(seed) % SHARE_HOOKS.length]
+}
+
+/** Salted separately so the reason is not locked to the hook index. */
+export function reasonForSeed(seed: string): string {
+  return SHARE_REASONS[fnv1a(`${seed}:reason`) % SHARE_REASONS.length]
 }
 
 export function shareLinkDisplay(_url?: string): string {
@@ -52,8 +68,8 @@ export function shareLinkDisplay(_url?: string): string {
 }
 
 /** Full post for the native sheet, Copy link, and the panel preview. Line breaks are exact. */
-export function sharePost(_url?: string, hook: string = SHARE_HOOKS[0]): string {
-  return `${hook} 🧩\n\nNo calculator. No cheating. 60 seconds.\nSharpens focus, trains your brain, wakes up your math.\n\nNothing to lose. Everything to gain.\n${SHARE_PAGE}`
+export function sharePost(seed: string): string {
+  return `${hookForSeed(seed)} 🧩\n\n${reasonForSeed(seed)}\n\nNothing to lose. Everything to gain.\n${SHARE_PAGE}`
 }
 
 export function shareUrl(seed: string, site = SITE_URL): string {
@@ -79,14 +95,14 @@ export function sharePayload(
 
 export type IntentName = 'x' | 'facebook' | 'threads' | 'whatsapp' | 'reddit'
 
-export function intentUrls(text: string, url: string): Record<IntentName, string> {
-  const post = sharePost(url, text)
+export function intentUrls(seed: string, url: string): Record<IntentName, string> {
+  const post = sharePost(seed)
   return {
     x: `https://x.com/intent/post?text=${encodeURIComponent(post)}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
     threads: `https://www.threads.net/intent/post?text=${encodeURIComponent(post)}`,
     whatsapp: `https://wa.me/?text=${encodeURIComponent(post)}`,
-    reddit: `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`,
+    reddit: `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(hookForSeed(seed))}`,
   }
 }
 

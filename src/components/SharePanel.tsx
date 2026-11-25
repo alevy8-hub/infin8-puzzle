@@ -41,7 +41,7 @@ export function SharePanel({ payload, onClose }: Props) {
   const [imageBlob, setImageBlob] = useState<Blob | null>(null)
   const [imageError, setImageError] = useState(false)
   const native = canNativeShare()
-  const intents = intentUrls(payload.text, payload.url)
+  const intents = intentUrls(payload.seed, payload.url)
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -85,7 +85,7 @@ export function SharePanel({ payload, onClose }: Props) {
   }, [payload])
 
   const onNative = async () => {
-    const post = sharePost(payload.url, payload.text)
+    const post = sharePost(payload.seed)
     // text already includes the link after a blank line; don't also pass url or some sheets put the link first
     try {
       const base = { title: payload.label, text: post }
@@ -127,7 +127,7 @@ export function SharePanel({ payload, onClose }: Props) {
     a.remove()
   }
 
-  const post = sharePost(payload.url, payload.text)
+  const post = sharePost(payload.seed)
 
   const onCopy = async () => {
     const ok = await copyText(post)
