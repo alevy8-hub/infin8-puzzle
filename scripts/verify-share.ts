@@ -10,6 +10,7 @@ import {
   intentUrls,
   puzzleOrdinal,
   SHARE_HOOK,
+  shareLinkDisplay,
   sharePayload,
   sharePost,
   shareText,
@@ -39,10 +40,14 @@ console.log('copy')
   check('same hook for a shared-view puzzle (no number, no emoji)', shareText(null) === SHARE_HOOK)
   check('hook has no puzzle number, emoji, or extra lines', !/[0-9∞🧩🧠\n]/.test(t) && t === SHARE_HOOK, t)
   const url = shareUrl('001')
+  const bare = shareLinkDisplay(url)
   const post = sharePost(url)
-  check('post is hook, blank line, then the link', post === `${SHARE_HOOK}\n\n${url}`, JSON.stringify(post))
+  check('display link drops https://', bare === 'alevy8-hub.github.io/infin8-puzzle/?seed=001', bare)
+  check('display link does not include a scheme', !/^https?:\/\//i.test(bare), bare)
+  check('post is hook, blank line, then the bare link', post === `${SHARE_HOOK}\n\n${bare}`, JSON.stringify(post))
   check('post starts with the hook, not the URL', post.startsWith(SHARE_HOOK) && !post.startsWith('http'))
-  check('link is on its own line after a blank line', post.split('\n\n')[1] === url)
+  check('link is on its own line after a blank line', post.split('\n\n')[1] === bare)
+  check('copied post has no https://', !post.includes('https://'))
 }
 
 console.log('links')
@@ -76,7 +81,12 @@ console.log('links')
     intents.reddit,
   )
   const xText = decodeURIComponent(new URL(intents.x).searchParams.get('text') || '')
-  check('decoded X text is hook, blank line, link', xText === `${SHARE_HOOK}\n\n${p.url}`, JSON.stringify(xText))
+  check(
+    'decoded X text is hook, blank line, bare link',
+    xText === `${SHARE_HOOK}\n\n${shareLinkDisplay(p.url)}`,
+    JSON.stringify(xText),
+  )
+  check('decoded X text has no https://', !xText.includes('https://'))
 }
 
 console.log('?seed= round-trip')

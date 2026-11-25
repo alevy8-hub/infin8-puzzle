@@ -34,9 +34,14 @@ export function shareText(_ordinal: number | null = null): string {
   return SHARE_HOOK
 }
 
-/** Hook, a blank line, then the link — used for copy, native share, and intent text. */
+/** Visible share link: no https://, so the post doesn't start with a scheme. */
+export function shareLinkDisplay(url: string): string {
+  return url.replace(/^https:\/\//i, '')
+}
+
+/** Hook, a blank line, then the bare link — used for copy, native share, and intent text. */
 export function sharePost(url: string, hook = SHARE_HOOK): string {
-  return `${hook}\n\n${url}`
+  return `${hook}\n\n${shareLinkDisplay(url)}`
 }
 
 export function shareUrl(seed: string, site = SITE_URL): string {

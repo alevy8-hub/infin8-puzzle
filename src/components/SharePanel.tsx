@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { canNativeShare, canShareFiles, copyText, intentUrls, sharePost, type SharePayload } from '../data/share'
+import { canNativeShare, canShareFiles, copyText, intentUrls, shareLinkDisplay, sharePost, type SharePayload } from '../data/share'
 import { renderPuzzleShareImage, shareImageFile } from '../data/shareImage'
 import './SharePanel.css'
 
@@ -15,6 +15,9 @@ const NETWORKS: { name: keyof ReturnType<typeof intentUrls>; label: string }[] =
   { name: 'whatsapp', label: 'WhatsApp' },
   { name: 'reddit', label: 'Reddit' },
 ]
+
+/** Those intents don't attach the puzzle image. Flip to true to show them again. */
+const SHOW_NETWORK_INTENTS = false
 
 export function ShareButton({ onClick, className }: { onClick: () => void; className?: string }) {
   return (
@@ -175,7 +178,7 @@ export function SharePanel({ payload, onClose }: Props) {
         ) : null}
         <p className="in8-share-preview">
           {payload.text}
-          <span className="in8-share-preview-link">{payload.url}</span>
+          <span className="in8-share-preview-link">{shareLinkDisplay(payload.url)}</span>
         </p>
         <div className="in8-share-actions">
           {native ? (
@@ -188,23 +191,27 @@ export function SharePanel({ payload, onClose }: Props) {
               Save image
             </button>
           ) : null}
-          {NETWORKS.map((n) => (
-            <a
-              key={n.name}
-              className="in8-share-net"
-              href={intents[n.name]}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {n.label}
-            </a>
-          ))}
+          {SHOW_NETWORK_INTENTS
+            ? NETWORKS.map((n) => (
+                <a
+                  key={n.name}
+                  className="in8-share-net"
+                  href={intents[n.name]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {n.label}
+                </a>
+              ))
+            : null}
           <button type="button" className="in8-share-copy" onClick={onCopy}>
             {copied ? 'Copied' : 'Copy link'}
           </button>
         </div>
         <p className="in8-share-hint">
-          To show the puzzle, use Share… or Save image, then attach it to your post.
+          {native
+            ? 'Share… includes the puzzle image. You can also save the image or copy the link.'
+            : 'Save the puzzle image and copy the link to share it.'}
         </p>
         {showManual ? (
           <input
