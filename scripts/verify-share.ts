@@ -14,7 +14,7 @@ import {
   shareUrl,
   SITE_URL,
 } from '../src/data/share'
-import { SHARE_LINK_TEXT, shareFinalRow } from '../src/data/shareImage'
+import { SHARE_FOOTER_TEXT, shareFinalRow } from '../src/data/shareImage'
 
 let failed = 0
 const check = (name: string, cond: boolean, detail = '') => {
@@ -104,7 +104,8 @@ console.log('?seed= round-trip')
 
 console.log('share image data')
 {
-  check('short link text has no scheme', SHARE_LINK_TEXT === 'alevy8-hub.github.io/infin8-puzzle')
+  check('footer is the brand line, not a URL', SHARE_FOOTER_TEXT === 'Hear / See / FEEL')
+  check('footer is not a web address', !/github\.io|https?:|\.com/i.test(SHARE_FOOTER_TEXT))
   const puz = generatePuzzle('beginner', 322048)
   const final = shareFinalRow(puz.finalRow)
   const last = final.tokens[final.tokens.length - 1]

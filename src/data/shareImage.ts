@@ -5,7 +5,7 @@ import type { EquationRow, EquationToken, Puzzle } from './puzzles'
 
 export const SHARE_IMAGE_W = 1080
 export const SHARE_IMAGE_H = 1350
-export const SHARE_LINK_TEXT = 'alevy8-hub.github.io/infin8-puzzle'
+export const SHARE_FOOTER_TEXT = 'Hear / See / FEEL'
 
 const BG = '#050505'
 const GOLD = '#d4af37'
@@ -78,13 +78,18 @@ function drawTracked(
   const widths = [...text].map((ch) => ctx.measureText(ch).width)
   const total = widths.reduce((a, b) => a + b, 0) + tracking * (text.length - 1)
   let x = cx - total / 2
-  ctx.textBaseline = 'middle'
+  ctx.textBaseline = 'alphabetic'
   ctx.textAlign = 'left'
   for (let i = 0; i < text.length; i += 1) {
     ctx.fillStyle = typeof fills === 'string' ? fills : fills(i, text[i])
     ctx.fillText(text[i], x, cy)
     x += widths[i] + tracking
   }
+}
+
+function trackedWidth(ctx: CanvasRenderingContext2D, text: string, tracking: number): number {
+  const widths = [...text].map((ch) => ctx.measureText(ch).width)
+  return widths.reduce((a, b) => a + b, 0) + tracking * Math.max(0, text.length - 1)
 }
 
 type Layout = { unit: number; gap: number; opW: number; numW: number; qW: number; groupGap: number; groupPad: number }
@@ -185,19 +190,19 @@ function drawToken(
     ctx.font = `600 ${Math.round(layout.unit * 0.42)}px system-ui, -apple-system, "Segoe UI", sans-serif`
     ctx.fillStyle = CREAM
     ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
+    ctx.textBaseline = 'alphabetic'
     ctx.fillText(token.value, x + w / 2, cy)
   } else if (token.type === 'number') {
     ctx.font = `700 ${Math.round(layout.unit * 0.46)}px system-ui, -apple-system, "Segoe UI", sans-serif`
     ctx.fillStyle = CREAM
     ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
+    ctx.textBaseline = 'alphabetic'
     ctx.fillText(String(token.value), x + w / 2, cy)
   } else {
     ctx.font = `700 ${Math.round(layout.unit * 0.62)}px system-ui, -apple-system, "Segoe UI", sans-serif`
     ctx.fillStyle = GOLD
     ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
+    ctx.textBaseline = 'alphabetic'
     ctx.fillText('?', x + w / 2, cy)
   }
   return w
@@ -240,50 +245,85 @@ export async function renderPuzzleShareImage(input: ShareImageInput): Promise<Bl
 
   const W = SHARE_IMAGE_W
   const H = SHARE_IMAGE_H
-
-  ctx.fillStyle = BG
-  ctx.fillRect(0, 0, W, H)
-
-  const glow = ctx.createRadialGradient(W / 2, 220, 40, W / 2, 280, 520)
-  glow.addColorStop(0, 'rgba(212, 175, 55, 0.16)')
-  glow.addColorStop(1, 'rgba(212, 175, 55, 0)')
-  ctx.fillStyle = glow
-  ctx.fillRect(0, 0, W, H)
-
-  const frame = 36
-  ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)'
-  ctx.lineWidth = 2
-  roundRect(ctx, frame, frame, W - frame * 2, H - frame * 2, 28)
-  ctx.stroke()
+  const FRAME = 36
+  const FRAME_W = 2
+  const innerTop = FRAME + FRAME_W / 2
+  const innerBot = H - FRAME - FRAME_W / 2
+  const innerH = innerBot - innerTop
 
   const contentLeft = 88
   const contentW = W - contentLeft * 2
-
-  let y = 118
-  ctx.font = '800 78px system-ui, -apple-system, "Segoe UI", sans-serif'
-  drawTracked(ctx, 'iNFiN8', W / 2, y, 10, (_i, ch) => (ch === '8' ? GOLD : CREAM))
-  y += 78
-
-  ctx.font = '800 44px system-ui, -apple-system, "Segoe UI", sans-serif'
-  ctx.fillStyle = CREAM
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(label, W / 2, y)
-  y += 52
-
-  ctx.font = '700 22px system-ui, -apple-system, "Segoe UI", sans-serif'
-  ctx.fillStyle = GOLD
-  ctx.letterSpacing = '0.22em'
-  ctx.fillText(levelName.toUpperCase(), W / 2, y)
-  ctx.letterSpacing = '0px'
-  y += 48
-
   const layout = fitLayout(rows, contentW - 48)
   const rowH = layout.unit + 16
   const rowGap = 28
   const boardPadY = 36
   const divider = 18
   const boardH = boardPadY * 2 + rows.length * rowH + rowGap * (rows.length - 1) + divider
+
+  const wordFont = '800 78px system-ui, -apple-system, "Segoe UI", sans-serif'
+  const titleFont = '800 44px system-ui, -apple-system, "Segoe UI", sans-serif'
+  const levelFont = '700 22px system-ui, -apple-system, "Segoe UI", sans-serif'
+  const promptFont = 'italic 500 40px Georgia, "Times New Roman", serif'
+  const footFont = '600 22px system-ui, -apple-system, "Segoe UI", sans-serif'
+  const levelText = levelName.toUpperCase()
+
+  const inkH = (font: string, text: string, letterSpacing = '0px') => {
+    ctx.font = font
+    ctx.textBaseline = 'alphabetic'
+    ctx.letterSpacing = letterSpacing
+    const m = ctx.measureText(text)
+    const ascent = m.actualBoundingBoxAscent ?? 0
+    const descent = m.actualBoundingBoxDescent ?? 0
+    ctx.letterSpacing = '0px'
+    return { h: ascent + descent, ascent }
+  }
+
+  const wordInk = inkH(wordFont, 'iNFiN8')
+  const titleInk = inkH(titleFont, label)
+  const levelInk = inkH(levelFont, levelText, '0.22em')
+  const promptInk = inkH(promptFont, 'Can you solve it?')
+  const footInk = inkH(footFont, SHARE_FOOTER_TEXT)
+
+  const PAIR = 26
+  const PAIR_SM = 18
+  const GAP = 48
+  const titleGroupH = wordInk.h + PAIR + titleInk.h + PAIR_SM + levelInk.h
+  const stackH = titleGroupH + GAP + boardH + GAP + promptInk.h + GAP + footInk.h
+  const stackTop = innerTop + (innerH - stackH) / 2
+
+  ctx.fillStyle = BG
+  ctx.fillRect(0, 0, W, H)
+
+  const glow = ctx.createRadialGradient(W / 2, stackTop + wordInk.h * 0.6, 40, W / 2, stackTop + 200, 520)
+  glow.addColorStop(0, 'rgba(212, 175, 55, 0.16)')
+  glow.addColorStop(1, 'rgba(212, 175, 55, 0)')
+  ctx.fillStyle = glow
+  ctx.fillRect(0, 0, W, H)
+
+  ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)'
+  ctx.lineWidth = FRAME_W
+  roundRect(ctx, FRAME, FRAME, W - FRAME * 2, H - FRAME * 2, 28)
+  ctx.stroke()
+
+  let y = stackTop
+  ctx.font = wordFont
+  drawTracked(ctx, 'iNFiN8', W / 2, y + wordInk.ascent, 10, (_i, ch) => (ch === '8' ? GOLD : CREAM))
+  y += wordInk.h + PAIR
+
+  ctx.font = titleFont
+  ctx.fillStyle = CREAM
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillText(label, W / 2, y + titleInk.ascent)
+  y += titleInk.h + PAIR_SM
+
+  ctx.font = levelFont
+  ctx.fillStyle = GOLD
+  ctx.letterSpacing = '0.22em'
+  ctx.fillText(levelText, W / 2, y + levelInk.ascent)
+  ctx.letterSpacing = '0px'
+  y += levelInk.h + GAP
+
   const boardX = contentLeft
   const boardW = contentW
   const boardY = y
@@ -316,21 +356,39 @@ export async function renderPuzzleShareImage(input: ShareImageInput): Promise<Bl
     const rowIndex = i
     const cluesBefore = Math.min(rowIndex, clueCount)
     const afterDivider = rowIndex >= clueCount ? divider : 0
-    const cy = boardY + boardPadY + rowH / 2 + cluesBefore * (rowH + rowGap) + (rowIndex >= clueCount ? rowGap : 0) + afterDivider
+    const cy =
+      boardY +
+      boardPadY +
+      rowH / 2 +
+      cluesBefore * (rowH + rowGap) +
+      (rowIndex >= clueCount ? rowGap : 0) +
+      afterDivider
     drawRow(ctx, rows[i], cy, layout, images, W)
   }
 
-  y = boardY + boardH + 56
-  ctx.font = 'italic 500 40px Georgia, "Times New Roman", serif'
+  y = boardY + boardH + GAP
+  ctx.font = promptFont
   ctx.fillStyle = CREAM_DIM
   ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText('Can you solve it?', W / 2, y)
-  y += 58
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillText('Can you solve it?', W / 2, y + promptInk.ascent)
+  y += promptInk.h + GAP
 
-  ctx.font = '600 24px system-ui, -apple-system, "Segoe UI", sans-serif'
-  ctx.fillStyle = GOLD
-  ctx.fillText(SHARE_LINK_TEXT, W / 2, y)
+  ctx.font = footFont
+  const footBase = y + footInk.ascent
+  const footMid = y + footInk.h / 2
+  drawTracked(ctx, SHARE_FOOTER_TEXT, W / 2, footBase, 7, 'rgba(212, 175, 55, 0.86)')
+  const footW = trackedWidth(ctx, SHARE_FOOTER_TEXT, 7)
+  const rulePad = 18
+  const ruleLen = 140
+  ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(W / 2 - footW / 2 - rulePad - ruleLen, footMid)
+  ctx.lineTo(W / 2 - footW / 2 - rulePad, footMid)
+  ctx.moveTo(W / 2 + footW / 2 + rulePad, footMid)
+  ctx.lineTo(W / 2 + footW / 2 + rulePad + ruleLen, footMid)
+  ctx.stroke()
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not create the share image'))), 'image/png')
