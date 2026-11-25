@@ -27,8 +27,16 @@ export function shareLabel(ordinal: number | null): string {
   return ordinal === null ? 'iNFiN8 Puzzle ∞' : `iNFiN8 Puzzle ${ordinal}/∞`
 }
 
-export function shareText(ordinal: number | null): string {
-  return `Can you solve ${shareLabel(ordinal)}? 🧠`
+/** The only line that precedes the share link. No puzzle number, no emoji, no extra lines. */
+export const SHARE_HOOK = 'Most people get this wrong on the first try.'
+
+export function shareText(_ordinal: number | null = null): string {
+  return SHARE_HOOK
+}
+
+/** Hook, a blank line, then the link — used for copy, native share, and intent text. */
+export function sharePost(url: string, hook = SHARE_HOOK): string {
+  return `${hook}\n\n${url}`
 }
 
 export function shareUrl(seed: string, site = SITE_URL): string {
@@ -55,12 +63,12 @@ export function sharePayload(
 export type IntentName = 'x' | 'facebook' | 'threads' | 'whatsapp' | 'reddit'
 
 export function intentUrls(text: string, url: string): Record<IntentName, string> {
-  const withLink = `${text} ${url}`
+  const post = sharePost(url, text)
   return {
-    x: `https://x.com/intent/post?text=${encodeURIComponent(withLink)}`,
+    x: `https://x.com/intent/post?text=${encodeURIComponent(post)}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-    threads: `https://www.threads.net/intent/post?text=${encodeURIComponent(withLink)}`,
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(withLink)}`,
+    threads: `https://www.threads.net/intent/post?text=${encodeURIComponent(post)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(post)}`,
     reddit: `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`,
   }
 }

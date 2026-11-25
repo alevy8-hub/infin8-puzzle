@@ -9,7 +9,9 @@ import { puzzleSeed } from '../src/data/random'
 import {
   intentUrls,
   puzzleOrdinal,
+  SHARE_HOOK,
   sharePayload,
+  sharePost,
   shareText,
   shareUrl,
   SITE_URL,
@@ -33,9 +35,14 @@ const puzzleFromSeed = (code: string) => {
 console.log('copy')
 {
   const t = shareText(9)
-  check('exact brand spelling and short text', t === 'Can you solve iNFiN8 Puzzle 9/∞? 🧠', t)
-  check('does not include the answer or hype words', !/correct|answer|solved it|amazing|incredible/i.test(t))
-  check('shared-view label uses ∞ only', shareText(null) === 'Can you solve iNFiN8 Puzzle ∞? 🧠')
+  check('hook is the exact line DJ picked', t === 'Most people get this wrong on the first try.', t)
+  check('same hook for a shared-view puzzle (no number, no emoji)', shareText(null) === SHARE_HOOK)
+  check('hook has no puzzle number, emoji, or extra lines', !/[0-9∞🧩🧠\n]/.test(t) && t === SHARE_HOOK, t)
+  const url = shareUrl('001')
+  const post = sharePost(url)
+  check('post is hook, blank line, then the link', post === `${SHARE_HOOK}\n\n${url}`, JSON.stringify(post))
+  check('post starts with the hook, not the URL', post.startsWith(SHARE_HOOK) && !post.startsWith('http'))
+  check('link is on its own line after a blank line', post.split('\n\n')[1] === url)
 }
 
 console.log('links')
@@ -52,21 +59,24 @@ console.log('links')
   )
   const p = sharePayload('I-482913', 9)
   const intents = intentUrls(p.text, p.url)
-  const encodedText = encodeURIComponent(`${p.text} ${p.url}`)
-  check('X intent', intents.x === `https://x.com/intent/post?text=${encodedText}`, intents.x)
+  const encodedPost = encodeURIComponent(sharePost(p.url, p.text))
+  check('payload text is the hook only', p.text === SHARE_HOOK, p.text)
+  check('X intent', intents.x === `https://x.com/intent/post?text=${encodedPost}`, intents.x)
   check(
-    'Facebook intent',
+    'Facebook intent stays URL-only',
     intents.facebook === `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(p.url)}`,
     intents.facebook,
   )
-  check('Threads intent', intents.threads === `https://www.threads.net/intent/post?text=${encodedText}`, intents.threads)
-  check('WhatsApp intent', intents.whatsapp === `https://wa.me/?text=${encodedText}`, intents.whatsapp)
+  check('Threads intent', intents.threads === `https://www.threads.net/intent/post?text=${encodedPost}`, intents.threads)
+  check('WhatsApp intent', intents.whatsapp === `https://wa.me/?text=${encodedPost}`, intents.whatsapp)
   check(
-    'Reddit intent',
+    'Reddit intent uses the hook as title',
     intents.reddit ===
       `https://www.reddit.com/submit?url=${encodeURIComponent(p.url)}&title=${encodeURIComponent(p.text)}`,
     intents.reddit,
   )
+  const xText = decodeURIComponent(new URL(intents.x).searchParams.get('text') || '')
+  check('decoded X text is hook, blank line, link', xText === `${SHARE_HOOK}\n\n${p.url}`, JSON.stringify(xText))
 }
 
 console.log('?seed= round-trip')

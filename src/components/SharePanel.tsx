@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { canNativeShare, canShareFiles, copyText, intentUrls, type SharePayload } from '../data/share'
+import { canNativeShare, canShareFiles, copyText, intentUrls, sharePost, type SharePayload } from '../data/share'
 import { renderPuzzleShareImage, shareImageFile } from '../data/shareImage'
 import './SharePanel.css'
 
@@ -82,8 +82,10 @@ export function SharePanel({ payload, onClose }: Props) {
   }, [payload])
 
   const onNative = async () => {
+    const post = sharePost(payload.url, payload.text)
+    // text already includes the link after a blank line; don't also pass url or some sheets put the link first
     try {
-      const base = { title: payload.label, text: payload.text, url: payload.url }
+      const base = { title: payload.label, text: post }
       if (imageBlob) {
         const file = await shareImageFile(imageBlob)
         if (canShareFiles([file])) {
@@ -94,7 +96,7 @@ export function SharePanel({ payload, onClose }: Props) {
           } catch (err) {
             if (isAbort(err)) return
             try {
-              await navigator.share({ title: payload.label, text: payload.text, files: [file] })
+              await navigator.share({ title: payload.label, text: post, files: [file] })
               onClose()
               return
             } catch (err2) {
@@ -122,8 +124,10 @@ export function SharePanel({ payload, onClose }: Props) {
     a.remove()
   }
 
+  const post = sharePost(payload.url, payload.text)
+
   const onCopy = async () => {
-    const ok = await copyText(payload.url)
+    const ok = await copyText(post)
     if (ok) {
       setCopied(true)
       setShowManual(false)
@@ -206,8 +210,8 @@ export function SharePanel({ payload, onClose }: Props) {
           <input
             className="in8-share-manual"
             readOnly
-            value={payload.url}
-            aria-label="Puzzle link"
+            value={post}
+            aria-label="Puzzle post"
             onFocus={(e) => e.currentTarget.select()}
           />
         ) : null}
